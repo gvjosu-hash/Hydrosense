@@ -3,7 +3,7 @@ import { COOKIE_SESION, verificarSesion } from "@/lib/auth";
 
 const RUTAS_PUBLICAS = ["/", "/login", "/registro"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
