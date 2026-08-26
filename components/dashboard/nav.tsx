@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { Xolo } from "@/components/mascota/xolo";
 
 const ENLACES = [
   { href: "/pos", etiqueta: "Cobrar" },
@@ -24,7 +25,10 @@ export function NavPrincipal({ nombreTienda }: { nombreTienda: string }) {
     <>
       <header className="hidden md:flex items-center justify-between border-b border-borde bg-superficie px-6 py-3">
         <div className="flex items-center gap-6">
-          <span className="font-bold text-lg">Xolo</span>
+          <div className="flex items-center gap-2">
+            <Xolo className="w-7 h-auto" />
+            <span className="font-bold text-lg">Xolo</span>
+          </div>
           <span className="text-texto-suave">{nombreTienda}</span>
           <nav className="flex gap-1">
             {ENLACES.map((enlace) => (

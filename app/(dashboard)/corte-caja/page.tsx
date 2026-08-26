@@ -180,7 +180,7 @@ export default function PaginaCorteCaja() {
 
         {historial.length === 0 && (
           <div className="flex flex-col items-center text-center gap-2 py-8">
-            <Xolo pose="buscando" className="w-16 h-16 text-texto-suave" />
+            <Xolo className="w-14 h-auto opacity-60" />
             <p className="text-texto-suave">No hay cortes registrados en este rango.</p>
           </div>
         )}

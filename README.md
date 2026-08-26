@@ -44,6 +44,15 @@ npm run dev
 3. Pega esa cadena en `DATABASE_URL` en tu `.env`.
 4. Corre `npx prisma migrate deploy` para crear las tablas.
 
+## Despliegue en Netlify
+
+`netlify.toml` ya trae la configuración necesaria: corre
+`npx prisma migrate deploy` antes de compilar (así las tablas se crean o
+actualizan solas en cada deploy) y usa `@netlify/plugin-nextjs` para servir
+las rutas dinámicas y de API. Solo hace falta configurar, en Site
+configuration → Environment variables, `DATABASE_URL` y `JWT_SECRET` antes
+del primer deploy.
+
 ## Estructura del proyecto
 
 ```
@@ -53,7 +62,7 @@ app/
   api/auth, api/productos, api/ventas, api/cortes-caja   rutas de API
 components/
   ui/          botones, campos, tarjetas, modal, toasts — sistema de diseño
-  mascota/     silueta SVG de Xolo
+  mascota/     logotipo oficial de Xolo (icono y lockup completo)
   productos/   formulario de alta/edición de producto
   pos/         carrito, teclado numérico, modales de cobro
 lib/
@@ -64,6 +73,7 @@ lib/
   catalogo-inicial.ts   catálogo de ~119 productos para tiendas nuevas
   validaciones/    esquemas zod compartidos entre rutas de API
 prisma/schema.prisma   modelo de datos
+public/marca/    assets del logotipo oficial (PNG con fondo transparente)
 ```
 
 ### Aislamiento multi-tenant
@@ -88,7 +98,7 @@ posible):
   su propio aniversario).
 - Una URL pública donde Mercado Pago pueda enviar el webhook de pagos
   (depende de dónde despliegues la app).
-- Confirmar el proveedor de hosting (Vercel/Railway/Render/otro) para
+- Confirmar el proveedor de hosting (Netlify/Vercel/Railway/otro) para
   definir cómo se ejecuta el cron mensual de transferencia a CLABE.
 
 Con eso, las siguientes secciones a construir son:

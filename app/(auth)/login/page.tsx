@@ -42,7 +42,7 @@ export default function PaginaLogin() {
   return (
     <main className="flex-1 flex flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-md flex flex-col items-center gap-4 mb-6">
-        <Xolo pose="sentado" className="w-20 h-20 text-acento" />
+        <Xolo className="w-16 h-auto" />
         <h1 className="text-3xl font-bold text-center">Bienvenido de vuelta</h1>
       </div>
       <Tarjeta className="w-full max-w-md p-6">

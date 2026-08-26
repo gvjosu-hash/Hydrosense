@@ -29,7 +29,7 @@ export interface VentaConfirmada {
 export function TicketExito({ venta, onNuevaVenta }: { venta: VentaConfirmada; onNuevaVenta: () => void }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 p-4 text-center">
-      <Xolo pose="contento" className="w-20 h-20 text-ok" />
+      <Xolo className="w-16 h-auto" />
       <h1 className="text-2xl font-bold">¡Venta realizada!</h1>
 
       <Tarjeta className="w-full max-w-sm p-5 text-left">

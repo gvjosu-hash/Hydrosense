@@ -44,7 +44,7 @@ export default function PaginaRegistro() {
   return (
     <main className="flex-1 flex flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-md flex flex-col items-center gap-4 mb-6">
-        <Xolo pose="contento" className="w-20 h-20 text-acento" />
+        <Xolo className="w-16 h-auto" />
         <h1 className="text-3xl font-bold text-center">Crea tu tienda en Xolo</h1>
       </div>
       <Tarjeta className="w-full max-w-md p-6">
