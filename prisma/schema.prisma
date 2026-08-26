@@ -1,0 +1,161 @@
+// Xolo — modelo de datos
+// Multi-tenant: toda tabla operativa lleva tiendaId y toda query de la app
+// debe filtrar por tiendaId (ver lib/tenant.ts).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TipoVenta {
+  PIEZA
+  GRANEL
+}
+
+enum Unidad {
+  PIEZA
+  KG
+  G
+  L
+  ML
+}
+
+enum RolUsuario {
+  DUENO
+  EMPLEADO
+}
+
+enum MetodoPago {
+  EFECTIVO
+}
+
+enum EstadoSuscripcion {
+  PRUEBA
+  ACTIVA
+  PAGO_FALLIDO
+  CANCELADA
+}
+
+model Tienda {
+  id        String   @id @default(cuid())
+  nombre    String
+  esDemo    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  usuarios    Usuario[]
+  productos   Producto[]
+  ventas      Venta[]
+  cortesCaja  CorteCaja[]
+  suscripcion Suscripcion?
+
+  @@map("tiendas")
+}
+
+model Usuario {
+  id            String     @id @default(cuid())
+  tiendaId      String
+  tienda        Tienda     @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
+  correo        String?    @unique
+  whatsapp      String?    @unique
+  passwordHash  String
+  nombre        String
+  rol           RolUsuario @default(DUENO)
+  createdAt     DateTime   @default(now())
+
+  ventas Venta[]
+
+  @@map("usuarios")
+}
+
+model Producto {
+  id           String    @id @default(cuid())
+  tiendaId     String
+  tienda       Tienda    @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
+  nombre       String
+  tipoVenta    TipoVenta
+  unidad       Unidad
+  precio       Decimal   @db.Decimal(10, 2)
+  stockActual  Decimal   @default(0) @db.Decimal(10, 3)
+  stockMinimo  Decimal   @default(0) @db.Decimal(10, 3)
+  codigoBarras String?
+  activo       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  ventaItems VentaItem[]
+
+  @@index([tiendaId])
+  @@index([tiendaId, codigoBarras])
+  @@map("productos")
+}
+
+model Venta {
+  id             String     @id @default(cuid())
+  tiendaId       String
+  tienda         Tienda     @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
+  usuarioId      String
+  usuario        Usuario    @relation(fields: [usuarioId], references: [id])
+  fecha          DateTime   @default(now())
+  total          Decimal    @db.Decimal(10, 2)
+  metodoPago     MetodoPago @default(EFECTIVO)
+  montoRecibido  Decimal?   @db.Decimal(10, 2)
+  cambio         Decimal?   @db.Decimal(10, 2)
+  // Idempotencia para sincronización offline (sección 9): id generado por el
+  // cliente antes de tener conexión; único por tienda para evitar duplicados
+  // al reintentar el envío.
+  localId        String?
+
+  items VentaItem[]
+
+  @@unique([tiendaId, localId])
+  @@index([tiendaId, fecha])
+  @@map("ventas")
+}
+
+model VentaItem {
+  id             String   @id @default(cuid())
+  ventaId        String
+  venta          Venta    @relation(fields: [ventaId], references: [id], onDelete: Cascade)
+  productoId     String
+  producto       Producto @relation(fields: [productoId], references: [id])
+  cantidad       Decimal  @db.Decimal(10, 3)
+  precioUnitario Decimal  @db.Decimal(10, 2)
+  importe        Decimal  @db.Decimal(10, 2)
+
+  @@map("venta_items")
+}
+
+model CorteCaja {
+  id                  String   @id @default(cuid())
+  tiendaId            String
+  tienda              Tienda   @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
+  fecha               DateTime @default(now())
+  totalSistema        Decimal  @db.Decimal(10, 2)
+  totalCapturado       Decimal  @db.Decimal(10, 2)
+  diferencia          Decimal  @db.Decimal(10, 2)
+  desglosePorMetodo   Json
+  createdAt           DateTime @default(now())
+
+  @@index([tiendaId, fecha])
+  @@map("cortes_caja")
+}
+
+// Sección 7 (pendiente): se completa al conectar Mercado Pago.
+model Suscripcion {
+  id                  String            @id @default(cuid())
+  tiendaId            String            @unique
+  tienda              Tienda            @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
+  mpPreapprovalId      String?
+  estado              EstadoSuscripcion @default(PRUEBA)
+  fechaInicioPrueba    DateTime          @default(now())
+  fechaFinPrueba       DateTime?
+  fechaProximoCobro    DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@map("suscripciones")
+}
