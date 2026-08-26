@@ -48,12 +48,14 @@ export default function PaginaLogin() {
       <Tarjeta className="w-full max-w-md p-6">
         <form onSubmit={enviar} className="flex flex-col gap-4">
           <Campo
+            id="identificador"
             etiqueta="Correo o WhatsApp"
             value={identificador}
             onChange={(e) => setIdentificador(e.target.value)}
             required
           />
           <Campo
+            id="password"
             etiqueta="Contraseña"
             type="password"
             value={password}

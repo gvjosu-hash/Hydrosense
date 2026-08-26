@@ -50,6 +50,7 @@ export default function PaginaRegistro() {
       <Tarjeta className="w-full max-w-md p-6">
         <form onSubmit={enviar} className="flex flex-col gap-4">
           <Campo
+            id="nombreTienda"
             etiqueta="Nombre de tu tienda"
             placeholder="Abarrotes Don Beto"
             value={nombreTienda}
@@ -57,6 +58,7 @@ export default function PaginaRegistro() {
             required
           />
           <Campo
+            id="nombreUsuario"
             etiqueta="Tu nombre"
             placeholder="Roberto López"
             value={nombreUsuario}
@@ -64,6 +66,7 @@ export default function PaginaRegistro() {
             required
           />
           <Campo
+            id="contacto"
             etiqueta="Correo o WhatsApp"
             placeholder="tucorreo@ejemplo.com o 55 1234 5678"
             value={contacto}
@@ -71,6 +74,7 @@ export default function PaginaRegistro() {
             required
           />
           <Campo
+            id="password"
             etiqueta="Contraseña"
             type="password"
             placeholder="Mínimo 8 caracteres"
