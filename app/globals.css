@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+:root {
+  /* Escala de grises (neutro, no frío-azulado) */
+  --color-fondo: #f7f7f6;
+  --color-superficie: #ffffff;
+  --color-borde: #e2e1de;
+  --color-borde-fuerte: #c9c7c2;
+  --color-texto: #1c1b19;
+  --color-texto-suave: #5c5a55;
+
+  /* Acento único: verde petróleo, serio, no saturado */
+  --color-acento: #0f5f56;
+  --color-acento-fuerte: #0b433d;
+  --color-acento-suave: #e3ede9;
+
+  /* Retroalimentación (no son el acento de marca, son estado) */
+  --color-ok: #1a7a4c;
+  --color-ok-suave: #e5f3ea;
+  --color-alerta: #b5490f;
+  --color-alerta-suave: #fbeae0;
+  --color-peligro: #a3271f;
+  --color-peligro-suave: #fbe8e6;
+}
+
+@theme inline {
+  --color-fondo: var(--color-fondo);
+  --color-superficie: var(--color-superficie);
+  --color-borde: var(--color-borde);
+  --color-borde-fuerte: var(--color-borde-fuerte);
+  --color-texto: var(--color-texto);
+  --color-texto-suave: var(--color-texto-suave);
+  --color-acento: var(--color-acento);
+  --color-acento-fuerte: var(--color-acento-fuerte);
+  --color-acento-suave: var(--color-acento-suave);
+  --color-ok: var(--color-ok);
+  --color-ok-suave: var(--color-ok-suave);
+  --color-alerta: var(--color-alerta);
+  --color-alerta-suave: var(--color-alerta-suave);
+  --color-peligro: var(--color-peligro);
+  --color-peligro-suave: var(--color-peligro-suave);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--color-fondo);
+  color: var(--color-texto);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
