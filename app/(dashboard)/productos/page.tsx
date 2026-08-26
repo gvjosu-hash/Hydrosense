@@ -150,6 +150,9 @@ export default function PaginaProductos() {
                 {Number(producto.stockActual)} {ETIQUETA_UNIDAD[producto.unidad]} en existencia
               </p>
             </button>
+            {Number(producto.precio) === 0 && producto.activo && (
+              <Insignia tono="neutral">Ajusta tu precio</Insignia>
+            )}
             {Number(producto.stockActual) < Number(producto.stockMinimo) && producto.activo && (
               <Insignia tono="alerta">Stock bajo</Insignia>
             )}

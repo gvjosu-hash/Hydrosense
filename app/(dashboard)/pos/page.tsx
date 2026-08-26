@@ -188,7 +188,11 @@ export default function PaginaPOS() {
                 className="w-full text-left px-3 py-3 rounded-xl hover:bg-black/5 flex justify-between items-center cursor-pointer"
               >
                 <span className="font-medium">{producto.nombre}</span>
-                <span className="text-texto-suave">${Number(producto.precio).toFixed(2)}</span>
+                {Number(producto.precio) === 0 ? (
+                  <span className="text-alerta text-sm font-semibold">Ajusta tu precio</span>
+                ) : (
+                  <span className="text-texto-suave">${Number(producto.precio).toFixed(2)}</span>
+                )}
               </button>
             ))}
           </Tarjeta>
