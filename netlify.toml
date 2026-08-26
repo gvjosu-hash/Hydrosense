@@ -1,5 +1,8 @@
 [build]
-  command = "npm run build"
+  # Aplica las migraciones pendientes de Prisma contra DATABASE_URL antes de
+  # compilar. Es seguro correrlo en cada deploy: "migrate deploy" solo aplica
+  # las migraciones que aún no se han corrido, nunca repite las ya aplicadas.
+  command = "npx prisma migrate deploy && npm run build"
   publish = ".next"
 
 [[plugins]]
