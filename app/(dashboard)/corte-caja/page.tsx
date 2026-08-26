@@ -61,11 +61,13 @@ export default function PaginaCorteCaja() {
   }, []);
 
   useEffect(() => {
-    cargarResumen();
+    const temporizador = setTimeout(() => cargarResumen(), 0);
+    return () => clearTimeout(temporizador);
   }, [cargarResumen]);
 
   useEffect(() => {
-    cargarHistorial(filtroFecha);
+    const temporizador = setTimeout(() => cargarHistorial(filtroFecha), 0);
+    return () => clearTimeout(temporizador);
   }, [filtroFecha, cargarHistorial]);
 
   async function cerrarCorte() {
