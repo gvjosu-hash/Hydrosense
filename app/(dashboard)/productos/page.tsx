@@ -43,7 +43,7 @@ export default function PaginaProductos() {
   const [productoEditando, setProductoEditando] = useState<Producto | null>(null);
   const [errorFormulario, setErrorFormulario] = useState("");
   const [guardando, setGuardando] = useState(false);
-  const [modoRapido, setModoRapido] = useState(false);
+  const [edicionRapidaId, setEdicionRapidaId] = useState<string | null>(null);
 
   const cargarProductos = useCallback(async (texto: string) => {
     setCargando(true);
@@ -110,23 +110,8 @@ export default function PaginaProductos() {
     <div className="p-4 sm:p-6 max-w-3xl mx-auto flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Productos</h1>
-        <div className="flex gap-2">
-          <Boton
-            variante={modoRapido ? "primario" : "secundario"}
-            className="text-sm px-3 py-2 min-h-0"
-            onClick={() => setModoRapido((v) => !v)}
-          >
-            {modoRapido ? "Listo" : "Edición rápida"}
-          </Boton>
-          <Boton onClick={abrirCrear}>+ Agregar</Boton>
-        </div>
+        <Boton onClick={abrirCrear}>+ Agregar</Boton>
       </div>
-
-      {modoRapido && (
-        <p className="text-texto-suave text-sm -mt-2">
-          Edita precio y existencia directo aquí — se guarda solo, sin abrir nada.
-        </p>
-      )}
 
       <Campo
         placeholder="Buscar por nombre o código de barras"
@@ -149,52 +134,66 @@ export default function PaginaProductos() {
       )}
 
       <div className="flex flex-col gap-2">
-        {modoRapido
-          ? productos
-              .filter((p) => p.activo)
-              .map((producto) => (
-                <FilaEdicionRapida
-                  key={producto.id}
-                  id={producto.id}
-                  nombre={producto.nombre}
-                  unidad={producto.unidad}
-                  precioInicial={producto.precio}
-                  stockInicial={producto.stockActual}
-                />
-              ))
-          : productos.map((producto) => (
-          <Tarjeta
-            key={producto.id}
-            className={`p-4 flex items-center justify-between gap-3 ${
-              !producto.activo ? "opacity-50" : ""
-            }`}
-          >
-            <button
-              onClick={() => abrirEditar(producto)}
-              className="text-left flex-1 cursor-pointer"
+        {productos.map((producto) =>
+          producto.id === edicionRapidaId ? (
+            <FilaEdicionRapida
+              key={producto.id}
+              id={producto.id}
+              nombre={producto.nombre}
+              unidad={producto.unidad}
+              precioInicial={producto.precio}
+              stockInicial={producto.stockActual}
+              onCerrar={() => {
+                setEdicionRapidaId(null);
+                cargarProductos(busqueda);
+              }}
+            />
+          ) : (
+            <Tarjeta
+              key={producto.id}
+              className={`p-4 flex flex-col gap-2 ${!producto.activo ? "opacity-50" : ""}`}
             >
-              <p className="font-semibold text-lg">{producto.nombre}</p>
-              <p className="text-texto-suave">
-                ${Number(producto.precio).toFixed(2)} / {ETIQUETA_UNIDAD[producto.unidad]}
-                {" · "}
-                {Number(producto.stockActual)} {ETIQUETA_UNIDAD[producto.unidad]} en existencia
-              </p>
-            </button>
-            {Number(producto.precio) === 0 && producto.activo && (
-              <Insignia tono="neutral">Ajusta tu precio</Insignia>
-            )}
-            {Number(producto.stockActual) < Number(producto.stockMinimo) && producto.activo && (
-              <Insignia tono="alerta">Stock bajo</Insignia>
-            )}
-            <Boton
-              variante="fantasma"
-              className="text-sm px-3 py-2 min-h-0"
-              onClick={() => cambiarActivo(producto, !producto.activo)}
-            >
-              {producto.activo ? "Dar de baja" : "Reactivar"}
-            </Boton>
-          </Tarjeta>
-        ))}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => abrirEditar(producto)}
+                  className="text-left flex-1 min-w-0 cursor-pointer"
+                >
+                  <p className="font-semibold text-lg truncate">{producto.nombre}</p>
+                  <p className="text-texto-suave text-sm">
+                    ${Number(producto.precio).toFixed(2)} / {ETIQUETA_UNIDAD[producto.unidad]}
+                    {" · "}
+                    {Number(producto.stockActual)} {ETIQUETA_UNIDAD[producto.unidad]} en existencia
+                  </p>
+                </button>
+                {producto.activo && (
+                  <button
+                    onClick={() => setEdicionRapidaId(producto.id)}
+                    aria-label={`Editar precio y existencia de ${producto.nombre}`}
+                    title="Editar precio y existencia"
+                    className="text-xl px-2 py-1 text-texto-suave hover:text-acento cursor-pointer shrink-0"
+                  >
+                    ✎
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                {Number(producto.precio) === 0 && producto.activo && (
+                  <Insignia tono="neutral">Ajusta tu precio</Insignia>
+                )}
+                {Number(producto.stockActual) < Number(producto.stockMinimo) &&
+                  producto.activo && <Insignia tono="alerta">Stock bajo</Insignia>}
+                <Boton
+                  variante="fantasma"
+                  className="text-sm px-3 py-2 min-h-0 ml-auto"
+                  onClick={() => cambiarActivo(producto, !producto.activo)}
+                >
+                  {producto.activo ? "Dar de baja" : "Reactivar"}
+                </Boton>
+              </div>
+            </Tarjeta>
+          )
+        )}
       </div>
 
       {modalAbierto && (

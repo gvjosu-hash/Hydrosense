@@ -17,12 +17,14 @@ export function FilaEdicionRapida({
   unidad,
   precioInicial,
   stockInicial,
+  onCerrar,
 }: {
   id: string;
   nombre: string;
   unidad: string;
   precioInicial: string;
   stockInicial: string;
+  onCerrar: () => void;
 }) {
   const [precio, setPrecio] = useState(precioInicial);
   const [stock, setStock] = useState(stockInicial);
@@ -61,12 +63,20 @@ export function FilaEdicionRapida({
   }
 
   return (
-    <Tarjeta className="p-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-      <div className="flex items-center justify-between sm:flex-1 sm:min-w-0">
-        <p className="font-semibold">{nombre}</p>
-        <span className="text-ok text-lg sm:hidden" aria-hidden>
-          {estado === "guardando" ? "…" : estado === "guardado" ? "✓" : ""}
-        </span>
+    <Tarjeta className="p-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 border-acento border-2">
+      <div className="flex items-center justify-between sm:flex-1 sm:min-w-0 gap-2">
+        <p className="font-semibold truncate">{nombre}</p>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-ok text-lg" aria-hidden>
+            {estado === "guardando" ? "…" : estado === "guardado" ? "✓" : ""}
+          </span>
+          <button
+            onClick={onCerrar}
+            className="text-acento font-semibold text-sm px-2 py-1 cursor-pointer"
+          >
+            Listo
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-3">
@@ -103,10 +113,6 @@ export function FilaEdicionRapida({
             className="w-full sm:w-24 text-lg px-2 py-1.5 rounded-lg border-2 border-borde-fuerte text-center focus:outline-none focus:border-acento"
           />
         </div>
-
-        <span className="hidden sm:block w-5 text-center text-ok text-lg self-end pb-2" aria-hidden>
-          {estado === "guardando" ? "…" : estado === "guardado" ? "✓" : ""}
-        </span>
       </div>
     </Tarjeta>
   );

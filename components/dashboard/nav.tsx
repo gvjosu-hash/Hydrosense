@@ -23,14 +23,14 @@ export function NavPrincipal({ nombreTienda }: { nombreTienda: string }) {
 
   return (
     <>
-      <header className="hidden md:flex items-center justify-between border-b border-borde bg-superficie px-6 py-3">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
+      <header className="flex items-center justify-between border-b border-borde bg-superficie px-4 sm:px-6 py-3 gap-3">
+        <div className="flex items-center gap-3 sm:gap-6 min-w-0">
+          <div className="flex items-center gap-2 shrink-0">
             <Xolo className="w-7 h-auto" />
-            <span className="font-bold text-lg">Xolo</span>
+            <span className="font-bold text-lg hidden sm:inline">Xolo</span>
           </div>
-          <span className="text-texto-suave">{nombreTienda}</span>
-          <nav className="flex gap-1">
+          <span className="text-texto-suave truncate">{nombreTienda}</span>
+          <nav className="hidden md:flex gap-1 shrink-0">
             {ENLACES.map((enlace) => (
               <Link
                 key={enlace.href}
@@ -48,9 +48,10 @@ export function NavPrincipal({ nombreTienda }: { nombreTienda: string }) {
         </div>
         <button
           onClick={salir}
-          className="text-texto-suave hover:text-peligro font-medium cursor-pointer"
+          className="text-texto-suave hover:text-peligro font-medium cursor-pointer shrink-0"
         >
-          Cerrar sesión
+          <span className="hidden sm:inline">Cerrar sesión</span>
+          <span className="sm:hidden">Salir</span>
         </button>
       </header>
 
