@@ -31,6 +31,7 @@ enum RolUsuario {
 
 enum MetodoPago {
   EFECTIVO
+  FIADO
 }
 
 enum EstadoSuscripcion {
@@ -50,6 +51,8 @@ model Tienda {
   productos   Producto[]
   ventas      Venta[]
   cortesCaja  CorteCaja[]
+  clientes    Cliente[]
+  abonos      Abono[]
   suscripcion Suscripcion?
 
   @@map("tiendas")
@@ -105,6 +108,9 @@ model Venta {
   metodoPago     MetodoPago @default(EFECTIVO)
   montoRecibido  Decimal?   @db.Decimal(10, 2)
   cambio         Decimal?   @db.Decimal(10, 2)
+  // Solo cuando metodoPago = FIADO: a quién se le fió la venta.
+  clienteId      String?
+  cliente        Cliente?   @relation(fields: [clienteId], references: [id])
   // Idempotencia para sincronización offline (sección 9): id generado por el
   // cliente antes de tener conexión; único por tienda para evitar duplicados
   // al reintentar el envío.
@@ -114,7 +120,40 @@ model Venta {
 
   @@unique([tiendaId, localId])
   @@index([tiendaId, fecha])
+  @@index([clienteId])
   @@map("ventas")
+}
+
+// Cliente al que se le fía (cuentas por cobrar). El saldo pendiente no se
+// guarda como columna: se calcula como suma de sus ventas FIADO menos la
+// suma de sus abonos (ver lib/fiado.ts), para no arrastrar
+// inconsistencias si algo falla a medio camino.
+model Cliente {
+  id        String   @id @default(cuid())
+  tiendaId  String
+  tienda    Tienda   @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
+  nombre    String
+  whatsapp  String?
+  createdAt DateTime @default(now())
+
+  ventas Venta[]
+  abonos Abono[]
+
+  @@index([tiendaId])
+  @@map("clientes")
+}
+
+model Abono {
+  id        String   @id @default(cuid())
+  tiendaId  String
+  tienda    Tienda   @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
+  clienteId String
+  cliente   Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  monto     Decimal  @db.Decimal(10, 2)
+  fecha     DateTime @default(now())
+
+  @@index([tiendaId, clienteId])
+  @@map("abonos")
 }
 
 model VentaItem {

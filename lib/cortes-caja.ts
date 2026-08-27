@@ -10,8 +10,11 @@ export interface DesgloseMetodo {
 export interface ResumenPendiente {
   desde: string;
   hasta: string;
+  // Solo ventas en EFECTIVO: es lo único que debe estar físicamente en la
+  // caja, así que es lo único contra lo que se compara el efectivo contado.
   totalSistema: number;
   numeroVentas: number;
+  totalFiado: number;
   desglosePorMetodo: DesgloseMetodo[];
 }
 
@@ -30,10 +33,18 @@ export async function calcularResumenPendiente(tiendaId: string): Promise<Resume
   });
 
   let totalSistema = new Prisma.Decimal(0);
+  let totalFiado = new Prisma.Decimal(0);
+  let numeroVentas = 0;
   const acumuladoPorMetodo = new Map<string, { total: Prisma.Decimal; numeroVentas: number }>();
 
   for (const venta of ventas) {
-    totalSistema = totalSistema.add(venta.total);
+    if (venta.metodoPago === "EFECTIVO") {
+      totalSistema = totalSistema.add(venta.total);
+      numeroVentas += 1;
+    } else if (venta.metodoPago === "FIADO") {
+      totalFiado = totalFiado.add(venta.total);
+    }
+
     const previo = acumuladoPorMetodo.get(venta.metodoPago) ?? {
       total: new Prisma.Decimal(0),
       numeroVentas: 0,
@@ -48,7 +59,8 @@ export async function calcularResumenPendiente(tiendaId: string): Promise<Resume
     desde: desde.toISOString(),
     hasta: hasta.toISOString(),
     totalSistema: totalSistema.toNumber(),
-    numeroVentas: ventas.length,
+    numeroVentas,
+    totalFiado: totalFiado.toNumber(),
     desglosePorMetodo: Array.from(acumuladoPorMetodo.entries()).map(([metodoPago, datos]) => ({
       metodoPago,
       total: datos.total.toNumber(),

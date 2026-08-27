@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     if (datos.localId) {
       const existente = await prisma.venta.findUnique({
         where: { tiendaId_localId: { tiendaId: sesion.tiendaId, localId: datos.localId } },
-        include: { items: { include: { producto: true } } },
+        include: { items: { include: { producto: true } }, cliente: true },
       });
       if (existente) {
         return NextResponse.json({ venta: existente });
@@ -86,6 +86,15 @@ export async function POST(request: Request) {
       cambio = montoRecibido.sub(total);
     }
 
+    if (datos.metodoPago === "FIADO") {
+      const cliente = await prisma.cliente.findFirst({
+        where: { id: datos.clienteId, tiendaId: sesion.tiendaId },
+      });
+      if (!cliente) {
+        return NextResponse.json({ error: "Cliente no encontrado" }, { status: 404 });
+      }
+    }
+
     const venta = await prisma.$transaction(async (tx) => {
       const venta = await tx.venta.create({
         data: {
@@ -95,6 +104,7 @@ export async function POST(request: Request) {
           metodoPago: datos.metodoPago,
           montoRecibido: montoRecibido ?? undefined,
           cambio: cambio ?? undefined,
+          clienteId: datos.metodoPago === "FIADO" ? datos.clienteId : undefined,
           localId: datos.localId,
           items: {
             create: itemsCalculados.map(({ producto, cantidad, importe }) => ({
@@ -105,7 +115,7 @@ export async function POST(request: Request) {
             })),
           },
         },
-        include: { items: { include: { producto: true } } },
+        include: { items: { include: { producto: true } }, cliente: true },
       });
 
       for (const { producto, cantidad } of itemsCalculados) {
