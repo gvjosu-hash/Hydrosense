@@ -1,8 +1,19 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requerirSesion } from "@/lib/tenant";
 import { respuestaError } from "@/lib/api-utils";
 import { esquemaProducto } from "@/lib/validaciones/producto";
+
+const esquemaEdicionRapida = z
+  .object({
+    activo: z.boolean().optional(),
+    precio: z.coerce.number().min(0, "El precio no puede ser negativo").optional(),
+    stockActual: z.coerce.number().min(0, "El stock no puede ser negativo").optional(),
+  })
+  .refine((datos) => datos.activo !== undefined || datos.precio !== undefined || datos.stockActual !== undefined, {
+    message: "No hay nada que actualizar",
+  });
 
 async function buscarProductoDeLaTienda(id: string, tiendaId: string) {
   const producto = await prisma.producto.findFirst({ where: { id, tiendaId } });
@@ -58,13 +69,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     await buscarProductoDeLaTienda(id, sesion.tiendaId);
 
     const cuerpo = await request.json();
-    if (typeof cuerpo.activo !== "boolean") {
-      return NextResponse.json({ error: "Falta el campo 'activo'" }, { status: 400 });
-    }
+    const datos = esquemaEdicionRapida.parse(cuerpo);
 
     const producto = await prisma.producto.update({
       where: { id },
-      data: { activo: cuerpo.activo },
+      data: {
+        ...(datos.activo !== undefined ? { activo: datos.activo } : {}),
+        ...(datos.precio !== undefined ? { precio: datos.precio } : {}),
+        ...(datos.stockActual !== undefined ? { stockActual: datos.stockActual } : {}),
+      },
     });
 
     return NextResponse.json({ producto });

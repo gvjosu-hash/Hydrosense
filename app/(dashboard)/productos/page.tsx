@@ -12,6 +12,7 @@ import {
   FormularioProducto,
   DatosFormularioProducto,
 } from "@/components/productos/formulario-producto";
+import { FilaEdicionRapida } from "@/components/productos/fila-edicion-rapida";
 
 interface Producto {
   id: string;
@@ -42,6 +43,7 @@ export default function PaginaProductos() {
   const [productoEditando, setProductoEditando] = useState<Producto | null>(null);
   const [errorFormulario, setErrorFormulario] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const [modoRapido, setModoRapido] = useState(false);
 
   const cargarProductos = useCallback(async (texto: string) => {
     setCargando(true);
@@ -108,8 +110,23 @@ export default function PaginaProductos() {
     <div className="p-4 sm:p-6 max-w-3xl mx-auto flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Productos</h1>
-        <Boton onClick={abrirCrear}>+ Agregar</Boton>
+        <div className="flex gap-2">
+          <Boton
+            variante={modoRapido ? "primario" : "secundario"}
+            className="text-sm px-3 py-2 min-h-0"
+            onClick={() => setModoRapido((v) => !v)}
+          >
+            {modoRapido ? "Listo" : "Edición rápida"}
+          </Boton>
+          <Boton onClick={abrirCrear}>+ Agregar</Boton>
+        </div>
       </div>
+
+      {modoRapido && (
+        <p className="text-texto-suave text-sm -mt-2">
+          Edita precio y existencia directo aquí — se guarda solo, sin abrir nada.
+        </p>
+      )}
 
       <Campo
         placeholder="Buscar por nombre o código de barras"
@@ -132,7 +149,20 @@ export default function PaginaProductos() {
       )}
 
       <div className="flex flex-col gap-2">
-        {productos.map((producto) => (
+        {modoRapido
+          ? productos
+              .filter((p) => p.activo)
+              .map((producto) => (
+                <FilaEdicionRapida
+                  key={producto.id}
+                  id={producto.id}
+                  nombre={producto.nombre}
+                  unidad={producto.unidad}
+                  precioInicial={producto.precio}
+                  stockInicial={producto.stockActual}
+                />
+              ))
+          : productos.map((producto) => (
           <Tarjeta
             key={producto.id}
             className={`p-4 flex items-center justify-between gap-3 ${

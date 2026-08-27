@@ -17,43 +17,61 @@ function granel(nombre: string, unidad: Extract<Unidad, "KG" | "G" | "L" | "ML">
 // Catálogo típico de una tienda de abarrotes/miscelánea en México. Se inserta
 // automáticamente al crear una tienda nueva (ver app/api/auth/registro), con
 // precio y stock en 0 — la tienda ajusta precios y existencias reales desde
-// /productos. No pretende ser exhaustivo, sino un punto de partida razonable
-// para no arrancar con el catálogo vacío.
+// /productos. El orden importa: se guarda como Producto.orden para que la
+// lista muestre primero lo más común en una tiendita real, en vez de un
+// orden alfabético que se siente arbitrario.
 export const catalogoInicial: ProductoInicial[] = [
-  // Bebidas
+  // Los más vendidos en una tiendita típica
   pieza("Coca-Cola 600 ml"),
-  pieza("Coca-Cola 1 L"),
+  pieza("Agua Ciel 600 ml"),
+  pieza("Sabritas Originales 45 g"),
+  pieza("Pan Bimbo blanco grande"),
+  pieza("Huevo (docena)"),
+  pieza("Leche Lala 1 L"),
+  pieza("Cerveza Corona 355 ml"),
+  pieza("Cerveza Modelo 355 ml"),
+  pieza("Cigarros (cajetilla)"),
+  pieza("Tortillas de harina (paquete)"),
+  pieza("Sopa instantánea Maruchan"),
+  pieza("Doritos 62 g"),
+  pieza("Galletas Marías Gamesa"),
+  pieza("Gansito Marinela"),
+  pieza("Chicles Trident"),
+  pieza("Jabón de pasta Zote"),
+  pieza("Papel higiénico (paquete 4 rollos)"),
+  pieza("Detergente Ariel (bolsa)"),
+  pieza("Café soluble Nescafé (frasco)"),
   pieza("Coca-Cola 2 L"),
+  granel("Arroz a granel", "KG"),
+  granel("Frijol a granel", "KG"),
+  granel("Azúcar a granel", "KG"),
+  pieza("Aceite Nutrioli 1 L"),
+  pieza("Pulparindo"),
+
+  // Más bebidas
+  pieza("Coca-Cola 1 L"),
   pieza("Pepsi 600 ml"),
   pieza("Sprite 600 ml"),
   pieza("Fanta Naranja 600 ml"),
   pieza("Manzanita Sol 600 ml"),
-  pieza("Agua Ciel 600 ml"),
   pieza("Agua Ciel 1.5 L"),
   pieza("Agua garrafón 20 L"),
   pieza("Jugo del Valle 1 L"),
   pieza("Boing 500 ml"),
   pieza("Gatorade 600 ml"),
   pieza("Red Bull 250 ml"),
-  pieza("Café soluble Nescafé (frasco)"),
-  pieza("Leche Lala 1 L"),
   pieza("Leche Alpura 1 L"),
   pieza("Yogurt bebible Yoplait"),
-  pieza("Cerveza Corona 355 ml"),
   pieza("Cerveza Tecate 355 ml"),
-  pieza("Cerveza Modelo 355 ml"),
   pieza("Cerveza Victoria 355 ml"),
   pieza("Caguama Corona 940 ml"),
 
-  // Botanas y dulces
-  pieza("Sabritas Originales 45 g"),
-  pieza("Doritos 62 g"),
+  // Más botanas y dulces
   pieza("Cheetos 60 g"),
   pieza("Ruffles 48 g"),
   pieza("Cheetos Flamin Hot"),
   pieza("Cacahuates japoneses"),
   pieza("Barritas Marinela"),
-  pieza("Gansito Marinela"),
   pieza("Pingüinos Marinela"),
   pieza("Chocolate Carlos V"),
   pieza("Chocolate Kinder Bueno"),
@@ -61,33 +79,26 @@ export const catalogoInicial: ProductoInicial[] = [
   pieza("Paleta Miguelito"),
   pieza("Bubulubu"),
   pieza("Mazapán De la Rosa"),
-  pieza("Chicles Trident"),
   pieza("Skwinkles"),
-  pieza("Pulparindo"),
 
-  // Galletas y pan
-  pieza("Galletas Marías Gamesa"),
+  // Más galletas y pan
   pieza("Galletas Emperador"),
   pieza("Galletas Chokis"),
   pieza("Galletas Príncipe"),
-  pieza("Pan Bimbo blanco grande"),
   pieza("Pan Bimbo chico"),
   pieza("Panqué Bimbo"),
-  pieza("Tortillas de harina (paquete)"),
   pieza("Concha"),
   pieza("Dona"),
 
-  // Abarrotes empaquetados
-  pieza("Arroz 1 kg (bolsa)"),
+  // Más abarrotes empaquetados
   pieza("Frijol 1 kg (bolsa)"),
   pieza("Azúcar 1 kg (bolsa)"),
   pieza("Sal 1 kg (bolsa)"),
-  pieza("Aceite Nutrioli 1 L"),
+  pieza("Arroz 1 kg (bolsa)"),
   pieza("Aceite 1-2-3 1 L"),
   pieza("Harina Maseca 1 kg"),
   pieza("Harina de trigo 1 kg"),
   pieza("Consomé de pollo Knorr"),
-  pieza("Sopa instantánea Maruchan"),
   pieza("Sopa La Moderna (pasta)"),
   pieza("Atún Dolores (lata)"),
   pieza("Sardina en lata"),
@@ -107,18 +118,14 @@ export const catalogoInicial: ProductoInicial[] = [
   pieza("Puré de tomate"),
 
   // Huevo y lácteos
-  pieza("Huevo (docena)"),
   pieza("Queso panela"),
   pieza("Crema Lala"),
   pieza("Mantequilla"),
 
   // Limpieza y cuidado personal
-  pieza("Jabón de pasta Zote"),
-  pieza("Detergente Ariel (bolsa)"),
   pieza("Suavizante Downy"),
   pieza("Cloro Cloralex"),
   pieza("Fabuloso"),
-  pieza("Papel higiénico (paquete 4 rollos)"),
   pieza("Papel higiénico individual"),
   pieza("Servilletas"),
   pieza("Jabón de tocador"),
@@ -131,13 +138,9 @@ export const catalogoInicial: ProductoInicial[] = [
   pieza("Papel de cocina (rollo)"),
   pieza("Focos"),
   pieza("Pilas AA (paquete)"),
-  pieza("Cigarros (cajetilla)"),
   pieza("Cerillos"),
 
-  // A granel
-  granel("Arroz a granel", "KG"),
-  granel("Frijol a granel", "KG"),
-  granel("Azúcar a granel", "KG"),
+  // Más a granel
   granel("Sal a granel", "KG"),
   granel("Harina a granel", "KG"),
   granel("Lentejas a granel", "KG"),

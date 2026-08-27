@@ -24,7 +24,7 @@ export async function GET(request: Request) {
             }
           : {}),
       },
-      orderBy: { nombre: "asc" },
+      orderBy: [{ orden: "asc" }, { nombre: "asc" }],
     });
 
     return NextResponse.json({ productos });

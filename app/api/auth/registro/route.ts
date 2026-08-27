@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       });
       if (catalogoInicial.length > 0) {
         await tx.producto.createMany({
-          data: catalogoInicial.map((p) => ({
+          data: catalogoInicial.map((p, indice) => ({
             tiendaId: tienda.id,
             nombre: p.nombre,
             tipoVenta: p.tipoVenta,
@@ -82,6 +82,7 @@ export async function POST(request: Request) {
             precio: 0,
             stockActual: 0,
             stockMinimo: 0,
+            orden: indice + 1,
           })),
         });
       }

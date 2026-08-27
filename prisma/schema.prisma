@@ -83,6 +83,7 @@ model Producto {
   stockMinimo  Decimal   @default(0) @db.Decimal(10, 3)
   codigoBarras String?
   activo       Boolean   @default(true)
+  orden        Int       @default(0)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
