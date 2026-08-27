@@ -27,11 +27,11 @@ export function NavPrincipal({ nombreTienda }: { nombreTienda: string }) {
 
   return (
     <>
-      <header className="flex items-center justify-between border-b border-borde bg-superficie px-4 sm:px-6 py-3 gap-3">
+      <header className="flex items-center justify-between border-b border-borde bg-superficie px-4 sm:px-6 py-3 gap-3 shadow-[var(--sombra-tarjeta)]">
         <div className="flex items-center gap-3 sm:gap-6 min-w-0">
           <div className="flex items-center gap-2 shrink-0">
             <Xolo className="w-7 h-auto" />
-            <span className="font-bold text-lg hidden sm:inline">Xolo</span>
+            <span className="font-serif font-semibold text-lg hidden sm:inline">Xolo</span>
           </div>
           <span className="text-texto-suave truncate">{nombreTienda}</span>
           <nav className="hidden md:flex gap-1 shrink-0">

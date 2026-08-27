@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  /* Escala de grises (neutro, no frío-azulado) */
-  --color-fondo: #f7f7f6;
-  --color-superficie: #ffffff;
-  --color-borde: #e2e1de;
-  --color-borde-fuerte: #c9c7c2;
-  --color-texto: #1c1b19;
-  --color-texto-suave: #5c5a55;
+  /* Escala neutra, cálida (marfil/hueso, no gris frío de app genérica) */
+  --color-fondo: #f8f6f1;
+  --color-superficie: #fffefb;
+  --color-borde: #e7e1d3;
+  --color-borde-fuerte: #cfc4ac;
+  --color-texto: #211f1a;
+  --color-texto-suave: #5f5b52;
 
-  /* Acento único: verde petróleo, serio, no saturado */
-  --color-acento: #0f5f56;
-  --color-acento-fuerte: #0b433d;
-  --color-acento-suave: #e3ede9;
+  /* Acento único: verde botella, formal y sobrio */
+  --color-acento: #0c4a3e;
+  --color-acento-fuerte: #082f27;
+  --color-acento-suave: #e6ece7;
 
   /* Retroalimentación (no son el acento de marca, son estado) */
   --color-ok: #1a7a4c;
@@ -21,6 +21,9 @@
   --color-alerta-suave: #fbeae0;
   --color-peligro: #a3271f;
   --color-peligro-suave: #fbe8e6;
+
+  --sombra-tarjeta: 0 1px 2px rgba(33, 31, 26, 0.04), 0 4px 12px rgba(33, 31, 26, 0.05);
+  --sombra-flotante: 0 12px 32px rgba(20, 20, 16, 0.18);
 }
 
 @theme inline {
@@ -41,6 +44,7 @@
   --color-peligro-suave: var(--color-peligro-suave);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-serif);
 }
 
 body {
@@ -50,4 +54,13 @@ body {
 
 * {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Los títulos usan la serif de marca; el resto de la interfaz (precios,
+   botones, formularios) se queda en Geist Sans por legibilidad. */
+h1,
+h2,
+h3 {
+  font-family: var(--font-serif), Georgia, serif;
+  letter-spacing: -0.01em;
 }

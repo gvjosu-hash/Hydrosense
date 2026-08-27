@@ -5,11 +5,11 @@ type Tamano = "normal" | "grande";
 
 const variantes: Record<Variante, string> = {
   primario:
-    "bg-acento text-white hover:bg-acento-fuerte active:bg-acento-fuerte disabled:bg-borde-fuerte",
+    "bg-acento text-white shadow-sm shadow-acento-fuerte/20 hover:bg-acento-fuerte active:bg-acento-fuerte disabled:bg-borde disabled:text-texto-suave disabled:shadow-none",
   secundario:
     "bg-superficie text-texto border-2 border-borde-fuerte hover:border-texto disabled:opacity-50",
   peligro:
-    "bg-peligro text-white hover:opacity-90 disabled:bg-borde-fuerte",
+    "bg-peligro text-white shadow-sm shadow-peligro/20 hover:opacity-90 disabled:bg-borde disabled:text-texto-suave disabled:shadow-none",
   fantasma:
     "bg-transparent text-texto hover:bg-black/5 disabled:opacity-50",
 };
@@ -29,7 +29,7 @@ export const Boton = forwardRef<HTMLButtonElement, BotonProps>(
     return (
       <button
         ref={ref}
-        className={`rounded-2xl font-semibold transition-colors disabled:cursor-not-allowed cursor-pointer ${variantes[variante]} ${tamanos[tamano]} ${className}`}
+        className={`rounded-xl font-semibold transition-colors disabled:cursor-not-allowed cursor-pointer ${variantes[variante]} ${tamanos[tamano]} ${className}`}
         {...props}
       />
     );

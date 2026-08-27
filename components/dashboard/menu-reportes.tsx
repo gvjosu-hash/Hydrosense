@@ -46,7 +46,7 @@ export function MenuReportes({ onCerrar }: { onCerrar: () => void }) {
         onClick={onCerrar}
         className="flex-1 bg-black/40 cursor-pointer"
       />
-      <div className="w-full max-w-xs bg-superficie h-full overflow-y-auto flex flex-col border-l border-borde">
+      <div className="w-full max-w-xs bg-superficie h-full overflow-y-auto flex flex-col border-l border-borde shadow-[var(--sombra-flotante)]">
         <div className="flex items-center justify-between px-5 py-4 border-b border-borde sticky top-0 bg-superficie">
           <h2 className="text-xl font-bold">Reportes</h2>
           <button
