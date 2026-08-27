@@ -10,6 +10,9 @@ export interface DatosFormularioProducto {
   tipoVenta: "PIEZA" | "GRANEL";
   unidad: "PIEZA" | "KG" | "G" | "L" | "ML";
   precio: string;
+  costo: string;
+  categoria: string;
+  fechaCaducidad: string;
   stockActual: string;
   stockMinimo: string;
   codigoBarras: string;
@@ -43,6 +46,9 @@ export function FormularioProducto({
     valoresIniciales?.unidad ?? "PIEZA"
   );
   const [precio, setPrecio] = useState(valoresIniciales?.precio ?? "");
+  const [costo, setCosto] = useState(valoresIniciales?.costo ?? "");
+  const [categoria, setCategoria] = useState(valoresIniciales?.categoria ?? "");
+  const [fechaCaducidad, setFechaCaducidad] = useState(valoresIniciales?.fechaCaducidad ?? "");
   const [stockActual, setStockActual] = useState(valoresIniciales?.stockActual ?? "0");
   const [stockMinimo, setStockMinimo] = useState(valoresIniciales?.stockMinimo ?? "0");
   const [codigoBarras, setCodigoBarras] = useState(valoresIniciales?.codigoBarras ?? "");
@@ -54,7 +60,18 @@ export function FormularioProducto({
 
   function enviar(e: React.FormEvent) {
     e.preventDefault();
-    onGuardar({ nombre, tipoVenta, unidad, precio, stockActual, stockMinimo, codigoBarras });
+    onGuardar({
+      nombre,
+      tipoVenta,
+      unidad,
+      precio,
+      costo,
+      categoria,
+      fechaCaducidad,
+      stockActual,
+      stockMinimo,
+      codigoBarras,
+    });
   }
 
   return (
@@ -137,6 +154,30 @@ export function FormularioProducto({
           onChange={(e) => setStockMinimo(e.target.value)}
         />
       </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Campo
+          etiqueta="Costo por unidad ($, opcional)"
+          type="number"
+          step="0.01"
+          min="0"
+          value={costo}
+          onChange={(e) => setCosto(e.target.value)}
+        />
+        <Campo
+          etiqueta="Categoría (opcional)"
+          placeholder="Bebidas, Snacks..."
+          value={categoria}
+          onChange={(e) => setCategoria(e.target.value)}
+        />
+      </div>
+
+      <Campo
+        etiqueta="Fecha de caducidad (opcional)"
+        type="date"
+        value={fechaCaducidad}
+        onChange={(e) => setFechaCaducidad(e.target.value)}
+      />
 
       <Campo
         etiqueta="Código de barras (opcional)"

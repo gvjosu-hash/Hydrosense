@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Xolo } from "@/components/mascota/xolo";
 import { Tarjeta } from "@/components/ui/card";
 import { Boton } from "@/components/ui/button";
+import { Campo } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 
 const ETIQUETA_UNIDAD: Record<string, string> = {
@@ -32,39 +33,42 @@ export interface VentaConfirmada {
   }[];
 }
 
+type EstadoEnvio = "preguntando" | "pidiendoNumero" | "descartado" | "enviado";
+
+function soloDigitos(valor: string): string {
+  return valor.replace(/\D/g, "");
+}
+
 export function TicketExito({ venta, onNuevaVenta }: { venta: VentaConfirmada; onNuevaVenta: () => void }) {
   const { mostrar } = useToast();
-  const [enviando, setEnviando] = useState(false);
+  const [estado, setEstado] = useState<EstadoEnvio>("preguntando");
+  const [numero, setNumero] = useState(venta.whatsappCliente ?? "");
 
-  async function compartirPorWhatsApp() {
-    setEnviando(true);
-    try {
-      const respuesta = await fetch(`/api/ventas/${venta.id}/ticket`);
-      const blob = await respuesta.blob();
-      const archivo = new File([blob], `ticket-${venta.id}.pdf`, { type: "application/pdf" });
-      const mensaje =
-        venta.metodoPago === "FIADO" && venta.nombreCliente
-          ? `Hola ${venta.nombreCliente}, aquí está tu ticket de ${venta.nombreTienda}. Total fiado: $${venta.total.toFixed(2)}.`
-          : `Ticket de ${venta.nombreTienda} · Total: $${venta.total.toFixed(2)}`;
+  function enviarPorWhatsApp(numeroDestino: string) {
+    const enlaceTicket = `${window.location.origin}/api/tickets/${venta.id}`;
+    const mensaje =
+      venta.metodoPago === "FIADO" && venta.nombreCliente
+        ? `Hola ${venta.nombreCliente}, aquí está tu ticket de ${venta.nombreTienda} (fiado, total $${venta.total.toFixed(2)}): ${enlaceTicket}`
+        : `Gracias por tu compra en ${venta.nombreTienda}. Aquí está tu ticket: ${enlaceTicket}`;
+    window.open(`https://wa.me/${soloDigitos(numeroDestino)}?text=${encodeURIComponent(mensaje)}`, "_blank");
+    setEstado("enviado");
+  }
 
-      const nav = navigator as Navigator & {
-        canShare?: (data?: ShareData) => boolean;
-      };
-      if (nav.canShare?.({ files: [archivo] })) {
-        await navigator.share({ files: [archivo], title: venta.nombreTienda, text: mensaje });
-        return;
-      }
-
-      const numero = venta.metodoPago === "FIADO" ? venta.whatsappCliente : null;
-      const enlace = `https://wa.me/${numero ?? ""}?text=${encodeURIComponent(mensaje)}`;
-      window.open(enlace, "_blank");
-      mostrar("Descarga el PDF y adjúntalo en WhatsApp");
-      window.open(`/api/ventas/${venta.id}/ticket`, "_blank");
-    } catch {
-      mostrar("No se pudo compartir el ticket");
-    } finally {
-      setEnviando(false);
+  function confirmarEnvio() {
+    if (venta.whatsappCliente) {
+      enviarPorWhatsApp(venta.whatsappCliente);
+    } else {
+      setEstado("pidiendoNumero");
     }
+  }
+
+  function enviarConNumeroCapturado() {
+    const digitos = soloDigitos(numero);
+    if (digitos.length < 10) {
+      mostrar("Escribe un número de WhatsApp válido (10 dígitos)");
+      return;
+    }
+    enviarPorWhatsApp(digitos);
   }
 
   return (
@@ -108,21 +112,70 @@ export function TicketExito({ venta, onNuevaVenta }: { venta: VentaConfirmada; o
         )}
       </Tarjeta>
 
-      <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
+      <Tarjeta className="w-full max-w-sm p-4">
+        {estado === "preguntando" && (
+          <div className="flex flex-col gap-3">
+            <p className="font-semibold">
+              {venta.whatsappCliente
+                ? `¿Enviar el ticket por WhatsApp a ${venta.nombreCliente}?`
+                : "¿El cliente quiere su ticket por WhatsApp?"}
+            </p>
+            <div className="flex gap-3">
+              <Boton
+                variante="secundario"
+                className="flex-1"
+                onClick={() => setEstado("descartado")}
+              >
+                No
+              </Boton>
+              <Boton className="flex-1" onClick={confirmarEnvio}>
+                Sí
+              </Boton>
+            </div>
+          </div>
+        )}
+
+        {estado === "pidiendoNumero" && (
+          <div className="flex flex-col gap-3">
+            <Campo
+              etiqueta="Número de WhatsApp del cliente"
+              placeholder="55 1234 5678"
+              value={numero}
+              onChange={(e) => setNumero(e.target.value)}
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <Boton
+                variante="secundario"
+                className="flex-1"
+                onClick={() => setEstado("descartado")}
+              >
+                Cancelar
+              </Boton>
+              <Boton className="flex-1" onClick={enviarConNumeroCapturado}>
+                Enviar
+              </Boton>
+            </div>
+          </div>
+        )}
+
+        {estado === "descartado" && (
+          <p className="text-texto-suave text-sm">
+            No se envió. La venta ya quedó guardada en el registro de ventas.
+          </p>
+        )}
+
+        {estado === "enviado" && (
+          <p className="text-ok font-semibold text-sm">Se abrió WhatsApp con el ticket listo para enviar.</p>
+        )}
+      </Tarjeta>
+
+      <div className="w-full max-w-sm">
         <a href={`/api/ventas/${venta.id}/ticket`} target="_blank" rel="noopener noreferrer" className="w-full">
           <Boton variante="secundario" tamano="grande" className="w-full">
             Descargar ticket (PDF)
           </Boton>
         </a>
-        <Boton
-          variante="secundario"
-          tamano="grande"
-          className="w-full"
-          onClick={compartirPorWhatsApp}
-          disabled={enviando}
-        >
-          {enviando ? "Enviando..." : "Enviar por WhatsApp"}
-        </Boton>
       </div>
       <Boton tamano="grande" className="w-full max-w-sm" onClick={onNuevaVenta}>
         Nueva venta

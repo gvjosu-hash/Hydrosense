@@ -9,6 +9,9 @@ const esquemaEdicionRapida = z
   .object({
     activo: z.boolean().optional(),
     precio: z.coerce.number().min(0, "El precio no puede ser negativo").optional(),
+    costo: z.coerce.number().min(0, "El costo no puede ser negativo").optional(),
+    categoria: z.string().trim().optional(),
+    fechaCaducidad: z.string().trim().optional(),
     stockActual: z.coerce.number().min(0, "El stock no puede ser negativo").optional(),
     stockMinimo: z.coerce.number().min(0, "El stock mínimo no puede ser negativo").optional(),
   })
@@ -16,6 +19,9 @@ const esquemaEdicionRapida = z
     (datos) =>
       datos.activo !== undefined ||
       datos.precio !== undefined ||
+      datos.costo !== undefined ||
+      datos.categoria !== undefined ||
+      datos.fechaCaducidad !== undefined ||
       datos.stockActual !== undefined ||
       datos.stockMinimo !== undefined,
     { message: "No hay nada que actualizar" }
@@ -56,6 +62,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         tipoVenta: datos.tipoVenta,
         unidad: datos.unidad,
         precio: datos.precio,
+        costo: datos.costo ?? null,
+        categoria: datos.categoria || null,
+        fechaCaducidad: datos.fechaCaducidad ? new Date(datos.fechaCaducidad) : null,
         stockActual: datos.stockActual,
         stockMinimo: datos.stockMinimo,
         codigoBarras,
@@ -82,6 +91,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       data: {
         ...(datos.activo !== undefined ? { activo: datos.activo } : {}),
         ...(datos.precio !== undefined ? { precio: datos.precio } : {}),
+        ...(datos.costo !== undefined ? { costo: datos.costo } : {}),
+        ...(datos.categoria !== undefined ? { categoria: datos.categoria || null } : {}),
+        ...(datos.fechaCaducidad !== undefined
+          ? { fechaCaducidad: datos.fechaCaducidad ? new Date(datos.fechaCaducidad) : null }
+          : {}),
         ...(datos.stockActual !== undefined ? { stockActual: datos.stockActual } : {}),
         ...(datos.stockMinimo !== undefined ? { stockMinimo: datos.stockMinimo } : {}),
       },

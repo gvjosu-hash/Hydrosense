@@ -24,7 +24,7 @@ export async function GET(request: Request) {
             }
           : {}),
       },
-      include: { items: { include: { producto: true } } },
+      include: { items: { include: { producto: true } }, usuario: true, cliente: true },
       orderBy: { fecha: "desc" },
     });
 

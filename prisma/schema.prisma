@@ -34,6 +34,13 @@ enum MetodoPago {
   FIADO
 }
 
+enum MotivoMerma {
+  CADUCIDAD
+  DANO
+  ROBO
+  OTRO
+}
+
 enum EstadoSuscripcion {
   PRUEBA
   ACTIVA
@@ -53,6 +60,7 @@ model Tienda {
   cortesCaja  CorteCaja[]
   clientes    Cliente[]
   abonos      Abono[]
+  mermas      Merma[]
   suscripcion Suscripcion?
 
   @@map("tiendas")
@@ -75,22 +83,29 @@ model Usuario {
 }
 
 model Producto {
-  id           String    @id @default(cuid())
-  tiendaId     String
-  tienda       Tienda    @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
-  nombre       String
-  tipoVenta    TipoVenta
-  unidad       Unidad
-  precio       Decimal   @db.Decimal(10, 2)
-  stockActual  Decimal   @default(0) @db.Decimal(10, 3)
-  stockMinimo  Decimal   @default(0) @db.Decimal(10, 3)
-  codigoBarras String?
-  activo       Boolean   @default(true)
-  orden        Int       @default(0)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  tiendaId       String
+  tienda         Tienda    @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
+  nombre         String
+  tipoVenta      TipoVenta
+  unidad         Unidad
+  precio         Decimal   @db.Decimal(10, 2)
+  // Costo de compra por unidad. Opcional: el catálogo precargado no lo trae,
+  // se captura desde la edición del producto. Sin costo, los reportes de
+  // utilidad tratan el costo como desconocido, no como cero.
+  costo          Decimal?  @db.Decimal(10, 2)
+  categoria      String?
+  fechaCaducidad DateTime?
+  stockActual    Decimal   @default(0) @db.Decimal(10, 3)
+  stockMinimo    Decimal   @default(0) @db.Decimal(10, 3)
+  codigoBarras   String?
+  activo         Boolean   @default(true)
+  orden          Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   ventaItems VentaItem[]
+  mermas     Merma[]
 
   @@index([tiendaId])
   @@index([tiendaId, codigoBarras])
@@ -154,6 +169,23 @@ model Abono {
 
   @@index([tiendaId, clienteId])
   @@map("abonos")
+}
+
+// Registro de pérdida de inventario (caducidad, daño, robo, etc.). Al
+// crearse descuenta stockActual del producto, igual que una venta.
+model Merma {
+  id         String      @id @default(cuid())
+  tiendaId   String
+  tienda     Tienda      @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
+  productoId String
+  producto   Producto    @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  cantidad   Decimal     @db.Decimal(10, 3)
+  motivo     MotivoMerma
+  nota       String?
+  fecha      DateTime    @default(now())
+
+  @@index([tiendaId, fecha])
+  @@map("mermas")
 }
 
 model VentaItem {

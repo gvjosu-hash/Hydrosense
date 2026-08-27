@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Xolo } from "@/components/mascota/xolo";
+import { MenuReportes } from "@/components/dashboard/menu-reportes";
 
 const ENLACES = [
   { href: "/pos", etiqueta: "Cobrar" },
@@ -15,6 +17,7 @@ const ENLACES = [
 export function NavPrincipal({ nombreTienda }: { nombreTienda: string }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [menuReportesAbierto, setMenuReportesAbierto] = useState(false);
 
   async function salir() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -47,13 +50,23 @@ export function NavPrincipal({ nombreTienda }: { nombreTienda: string }) {
             ))}
           </nav>
         </div>
-        <button
-          onClick={salir}
-          className="text-texto-suave hover:text-peligro font-medium cursor-pointer shrink-0"
-        >
-          <span className="hidden sm:inline">Cerrar sesión</span>
-          <span className="sm:hidden">Salir</span>
-        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            onClick={() => setMenuReportesAbierto(true)}
+            className="flex items-center gap-1.5 text-texto-suave hover:text-acento font-medium cursor-pointer"
+            aria-label="Abrir menú de reportes"
+          >
+            <span aria-hidden>☰</span>
+            <span className="hidden sm:inline">Reportes</span>
+          </button>
+          <button
+            onClick={salir}
+            className="text-texto-suave hover:text-peligro font-medium cursor-pointer"
+          >
+            <span className="hidden sm:inline">Cerrar sesión</span>
+            <span className="sm:hidden">Salir</span>
+          </button>
+        </div>
       </header>
 
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-superficie border-t border-borde flex">
@@ -69,6 +82,8 @@ export function NavPrincipal({ nombreTienda }: { nombreTienda: string }) {
           </Link>
         ))}
       </nav>
+
+      {menuReportesAbierto && <MenuReportes onCerrar={() => setMenuReportesAbierto(false)} />}
     </>
   );
 }

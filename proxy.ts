@@ -9,6 +9,9 @@ export async function proxy(request: NextRequest) {
   if (
     RUTAS_PUBLICAS.includes(pathname) ||
     pathname.startsWith("/api/auth") ||
+    // Enlace de ticket que se manda al cliente por WhatsApp: no tiene sesión
+    // propia, así que esta ruta se valida solo con el id (ver su código).
+    pathname.startsWith("/api/tickets") ||
     pathname.startsWith("/_next")
   ) {
     return NextResponse.next();

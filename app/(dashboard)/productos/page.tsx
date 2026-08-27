@@ -20,10 +20,17 @@ interface Producto {
   tipoVenta: "PIEZA" | "GRANEL";
   unidad: "PIEZA" | "KG" | "G" | "L" | "ML";
   precio: string;
+  costo: string | null;
+  categoria: string | null;
+  fechaCaducidad: string | null;
   stockActual: string;
   stockMinimo: string;
   codigoBarras: string | null;
   activo: boolean;
+}
+
+function aFechaInput(iso: string | null): string {
+  return iso ? iso.slice(0, 10) : "";
 }
 
 const ETIQUETA_UNIDAD: Record<Producto["unidad"], string> = {
@@ -142,6 +149,9 @@ export default function PaginaProductos() {
               nombre={producto.nombre}
               unidad={producto.unidad}
               precioInicial={producto.precio}
+              costoInicial={producto.costo ?? ""}
+              categoriaInicial={producto.categoria ?? ""}
+              fechaCaducidadInicial={aFechaInput(producto.fechaCaducidad)}
               stockInicial={producto.stockActual}
               stockMinimoInicial={producto.stockMinimo}
               onCerrar={() => {
@@ -210,6 +220,9 @@ export default function PaginaProductos() {
                     tipoVenta: productoEditando.tipoVenta,
                     unidad: productoEditando.unidad,
                     precio: productoEditando.precio,
+                    costo: productoEditando.costo ?? "",
+                    categoria: productoEditando.categoria ?? "",
+                    fechaCaducidad: aFechaInput(productoEditando.fechaCaducidad),
                     stockActual: productoEditando.stockActual,
                     stockMinimo: productoEditando.stockMinimo,
                     codigoBarras: productoEditando.codigoBarras ?? "",

@@ -11,13 +11,23 @@ const ETIQUETA_UNIDAD: Record<string, string> = {
   ML: "ml",
 };
 
-type Cambios = { precio?: string; stockActual?: string; stockMinimo?: string };
+type Cambios = {
+  precio?: string;
+  costo?: string;
+  categoria?: string;
+  fechaCaducidad?: string;
+  stockActual?: string;
+  stockMinimo?: string;
+};
 
 export function FilaEdicionRapida({
   id,
   nombre,
   unidad,
   precioInicial,
+  costoInicial,
+  categoriaInicial,
+  fechaCaducidadInicial,
   stockInicial,
   stockMinimoInicial,
   onCerrar,
@@ -26,11 +36,17 @@ export function FilaEdicionRapida({
   nombre: string;
   unidad: string;
   precioInicial: string;
+  costoInicial: string;
+  categoriaInicial: string;
+  fechaCaducidadInicial: string;
   stockInicial: string;
   stockMinimoInicial: string;
   onCerrar: () => void;
 }) {
   const [precio, setPrecio] = useState(precioInicial);
+  const [costo, setCosto] = useState(costoInicial);
+  const [categoria, setCategoria] = useState(categoriaInicial);
+  const [fechaCaducidad, setFechaCaducidad] = useState(fechaCaducidadInicial);
   const [stock, setStock] = useState(stockInicial);
   const [stockMinimo, setStockMinimo] = useState(stockMinimoInicial);
   const [estado, setEstado] = useState<"reposo" | "guardando" | "guardado">("reposo");
@@ -134,6 +150,50 @@ export function FilaEdicionRapida({
               programarGuardado({ stockMinimo: e.target.value });
             }}
             className="w-full sm:w-24 text-lg px-2 py-1.5 rounded-lg border-2 border-borde-fuerte text-center focus:outline-none focus:border-acento"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-3">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-texto-suave">Costo $ (para utilidad)</span>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            inputMode="decimal"
+            value={costo}
+            onChange={(e) => {
+              setCosto(e.target.value);
+              programarGuardado({ costo: e.target.value });
+            }}
+            className="w-full sm:w-28 text-lg px-2 py-1.5 rounded-lg border-2 border-borde-fuerte text-center focus:outline-none focus:border-acento"
+          />
+        </div>
+
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-texto-suave">Categoría</span>
+          <input
+            type="text"
+            value={categoria}
+            onChange={(e) => {
+              setCategoria(e.target.value);
+              programarGuardado({ categoria: e.target.value });
+            }}
+            className="w-full sm:w-32 text-base px-2 py-1.5 rounded-lg border-2 border-borde-fuerte text-center focus:outline-none focus:border-acento"
+          />
+        </div>
+
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-texto-suave">Caduca</span>
+          <input
+            type="date"
+            value={fechaCaducidad}
+            onChange={(e) => {
+              setFechaCaducidad(e.target.value);
+              programarGuardado({ fechaCaducidad: e.target.value });
+            }}
+            className="w-full sm:w-36 text-base px-2 py-1.5 rounded-lg border-2 border-borde-fuerte text-center focus:outline-none focus:border-acento"
           />
         </div>
       </div>
