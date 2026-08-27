@@ -86,8 +86,8 @@ export function FilaEdicionRapida({
   const pasoStock = unidad === "PIEZA" ? "1" : "0.001";
 
   return (
-    <Tarjeta className="p-3 flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 border-acento border-2">
-      <div className="flex items-center justify-between sm:flex-1 sm:min-w-0 gap-2">
+    <Tarjeta className="p-3 flex flex-col gap-3 border-acento border-2">
+      <div className="flex items-center justify-between gap-2">
         <p className="font-semibold truncate">{nombre}</p>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-ok text-lg" aria-hidden>
@@ -102,7 +102,7 @@ export function FilaEdicionRapida({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-3">
+      <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-2 sm:gap-3">
         <div className="flex flex-col gap-0.5">
           <span className="text-xs text-texto-suave">Precio $</span>
           <input
@@ -152,9 +152,7 @@ export function FilaEdicionRapida({
             className="w-full sm:w-24 text-lg px-2 py-1.5 rounded-lg border-2 border-borde-fuerte text-center focus:outline-none focus:border-acento"
           />
         </div>
-      </div>
 
-      <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-3">
         <div className="flex flex-col gap-0.5">
           <span className="text-xs text-texto-suave">Costo $ (para utilidad)</span>
           <input
