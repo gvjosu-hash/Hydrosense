@@ -143,6 +143,7 @@ export default function PaginaProductos() {
               unidad={producto.unidad}
               precioInicial={producto.precio}
               stockInicial={producto.stockActual}
+              stockMinimoInicial={producto.stockMinimo}
               onCerrar={() => {
                 setEdicionRapidaId(null);
                 cargarProductos(busqueda);

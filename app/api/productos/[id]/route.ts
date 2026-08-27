@@ -10,10 +10,16 @@ const esquemaEdicionRapida = z
     activo: z.boolean().optional(),
     precio: z.coerce.number().min(0, "El precio no puede ser negativo").optional(),
     stockActual: z.coerce.number().min(0, "El stock no puede ser negativo").optional(),
+    stockMinimo: z.coerce.number().min(0, "El stock mínimo no puede ser negativo").optional(),
   })
-  .refine((datos) => datos.activo !== undefined || datos.precio !== undefined || datos.stockActual !== undefined, {
-    message: "No hay nada que actualizar",
-  });
+  .refine(
+    (datos) =>
+      datos.activo !== undefined ||
+      datos.precio !== undefined ||
+      datos.stockActual !== undefined ||
+      datos.stockMinimo !== undefined,
+    { message: "No hay nada que actualizar" }
+  );
 
 async function buscarProductoDeLaTienda(id: string, tiendaId: string) {
   const producto = await prisma.producto.findFirst({ where: { id, tiendaId } });
@@ -77,6 +83,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         ...(datos.activo !== undefined ? { activo: datos.activo } : {}),
         ...(datos.precio !== undefined ? { precio: datos.precio } : {}),
         ...(datos.stockActual !== undefined ? { stockActual: datos.stockActual } : {}),
+        ...(datos.stockMinimo !== undefined ? { stockMinimo: datos.stockMinimo } : {}),
       },
     });
 

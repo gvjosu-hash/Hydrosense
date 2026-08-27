@@ -11,12 +11,15 @@ const ETIQUETA_UNIDAD: Record<string, string> = {
   ML: "ml",
 };
 
+type Cambios = { precio?: string; stockActual?: string; stockMinimo?: string };
+
 export function FilaEdicionRapida({
   id,
   nombre,
   unidad,
   precioInicial,
   stockInicial,
+  stockMinimoInicial,
   onCerrar,
 }: {
   id: string;
@@ -24,16 +27,18 @@ export function FilaEdicionRapida({
   unidad: string;
   precioInicial: string;
   stockInicial: string;
+  stockMinimoInicial: string;
   onCerrar: () => void;
 }) {
   const [precio, setPrecio] = useState(precioInicial);
   const [stock, setStock] = useState(stockInicial);
+  const [stockMinimo, setStockMinimo] = useState(stockMinimoInicial);
   const [estado, setEstado] = useState<"reposo" | "guardando" | "guardado">("reposo");
   const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Acumula cambios de precio/existencia entre disparos del temporizador: si
-  // el usuario edita los dos campos seguido, el segundo cambio no debe borrar
-  // el primero — se mandan juntos cuando finalmente se guarda.
-  const pendientes = useRef<{ precio?: string; stockActual?: string }>({});
+  // Acumula cambios entre disparos del temporizador: si el usuario edita
+  // varios campos seguido, uno no debe borrar el pendiente del otro — se
+  // mandan juntos cuando finalmente se guarda.
+  const pendientes = useRef<Cambios>({});
 
   useEffect(() => {
     return () => {
@@ -41,7 +46,7 @@ export function FilaEdicionRapida({
     };
   }, []);
 
-  function programarGuardado(cambios: { precio?: string; stockActual?: string }) {
+  function programarGuardado(cambios: Cambios) {
     pendientes.current = { ...pendientes.current, ...cambios };
     if (temporizador.current) clearTimeout(temporizador.current);
     temporizador.current = setTimeout(async () => {
@@ -62,8 +67,10 @@ export function FilaEdicionRapida({
     }, 600);
   }
 
+  const pasoStock = unidad === "PIEZA" ? "1" : "0.001";
+
   return (
-    <Tarjeta className="p-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 border-acento border-2">
+    <Tarjeta className="p-3 flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 border-acento border-2">
       <div className="flex items-center justify-between sm:flex-1 sm:min-w-0 gap-2">
         <p className="font-semibold truncate">{nombre}</p>
         <div className="flex items-center gap-2 shrink-0">
@@ -79,8 +86,8 @@ export function FilaEdicionRapida({
         </div>
       </div>
 
-      <div className="flex gap-3">
-        <div className="flex flex-col gap-0.5 flex-1 sm:flex-none">
+      <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-3">
+        <div className="flex flex-col gap-0.5">
           <span className="text-xs text-texto-suave">Precio $</span>
           <input
             type="number"
@@ -96,19 +103,35 @@ export function FilaEdicionRapida({
           />
         </div>
 
-        <div className="flex flex-col gap-0.5 flex-1 sm:flex-none">
+        <div className="flex flex-col gap-0.5">
           <span className="text-xs text-texto-suave">
             Existencia ({ETIQUETA_UNIDAD[unidad] ?? unidad})
           </span>
           <input
             type="number"
-            step={unidad === "PIEZA" ? "1" : "0.001"}
+            step={pasoStock}
             min="0"
             inputMode="decimal"
             value={stock}
             onChange={(e) => {
               setStock(e.target.value);
               programarGuardado({ stockActual: e.target.value });
+            }}
+            className="w-full sm:w-24 text-lg px-2 py-1.5 rounded-lg border-2 border-borde-fuerte text-center focus:outline-none focus:border-acento"
+          />
+        </div>
+
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-texto-suave">Alertar bajo de</span>
+          <input
+            type="number"
+            step={pasoStock}
+            min="0"
+            inputMode="decimal"
+            value={stockMinimo}
+            onChange={(e) => {
+              setStockMinimo(e.target.value);
+              programarGuardado({ stockMinimo: e.target.value });
             }}
             className="w-full sm:w-24 text-lg px-2 py-1.5 rounded-lg border-2 border-borde-fuerte text-center focus:outline-none focus:border-acento"
           />
