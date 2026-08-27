@@ -8,6 +8,7 @@ const ENLACES = [
   { href: "/pos", etiqueta: "Cobrar" },
   { href: "/productos", etiqueta: "Productos" },
   { href: "/inventario", etiqueta: "Inventario" },
+  { href: "/fiado", etiqueta: "Fiado" },
   { href: "/corte-caja", etiqueta: "Corte de caja" },
 ];
 

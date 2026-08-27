@@ -7,7 +7,7 @@ import { Boton } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { Carrito, ItemCarrito } from "@/components/pos/carrito";
 import { ModalCantidadGranel } from "@/components/pos/modal-cantidad-granel";
-import { ModalCobro } from "@/components/pos/modal-cobro";
+import { ModalCobro, ResultadoCobro } from "@/components/pos/modal-cobro";
 import { TicketExito, VentaConfirmada } from "@/components/pos/ticket-exito";
 
 interface ProductoBusqueda {
@@ -119,7 +119,7 @@ export default function PaginaPOS() {
 
   const total = carrito.reduce((suma, i) => suma + i.cantidad * i.precioUnitario, 0);
 
-  async function confirmarCobro(montoRecibido: number) {
+  async function confirmarCobro(resultado: ResultadoCobro) {
     setCobrando(true);
     setErrorCobro("");
     try {
@@ -128,8 +128,7 @@ export default function PaginaPOS() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: carrito.map((i) => ({ productoId: i.productoId, cantidad: i.cantidad })),
-          metodoPago: "EFECTIVO",
-          montoRecibido,
+          ...resultado,
         }),
       });
       const datos = await respuesta.json();
@@ -141,8 +140,12 @@ export default function PaginaPOS() {
       setVentaExitosa({
         id: venta.id,
         total: Number(venta.total),
+        metodoPago: venta.metodoPago,
         montoRecibido: venta.montoRecibido !== null ? Number(venta.montoRecibido) : null,
         cambio: venta.cambio !== null ? Number(venta.cambio) : null,
+        nombreCliente: venta.cliente?.nombre ?? null,
+        whatsappCliente: venta.cliente?.whatsapp ?? null,
+        nombreTienda: venta.tienda.nombre,
         items: venta.items.map((it: { producto: { nombre: string; unidad: string }; cantidad: string; precioUnitario: string; importe: string }) => ({
           nombre: it.producto.nombre,
           unidad: it.producto.unidad,

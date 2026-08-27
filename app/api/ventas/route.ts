@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     if (datos.localId) {
       const existente = await prisma.venta.findUnique({
         where: { tiendaId_localId: { tiendaId: sesion.tiendaId, localId: datos.localId } },
-        include: { items: { include: { producto: true } }, cliente: true },
+        include: { items: { include: { producto: true } }, cliente: true, tienda: true },
       });
       if (existente) {
         return NextResponse.json({ venta: existente });
@@ -115,7 +115,7 @@ export async function POST(request: Request) {
             })),
           },
         },
-        include: { items: { include: { producto: true } }, cliente: true },
+        include: { items: { include: { producto: true } }, cliente: true, tienda: true },
       });
 
       for (const { producto, cantidad } of itemsCalculados) {
