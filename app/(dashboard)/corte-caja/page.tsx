@@ -14,6 +14,7 @@ interface Resumen {
   totalSistema: number;
   numeroVentas: number;
   totalFiado: number;
+  totalTarjeta: number;
   desglosePorMetodo: { metodoPago: string; total: number; numeroVentas: number }[];
 }
 
@@ -25,7 +26,11 @@ interface Corte {
   diferencia: string;
 }
 
-const ETIQUETA_METODO: Record<string, string> = { EFECTIVO: "Efectivo", FIADO: "Fiado" };
+const ETIQUETA_METODO: Record<string, string> = {
+  EFECTIVO: "Efectivo",
+  TARJETA: "Tarjeta",
+  FIADO: "Fiado",
+};
 
 function formatoFecha(iso: string) {
   return new Date(iso).toLocaleString("es-MX", {
@@ -109,8 +114,17 @@ export default function PaginaCorteCaja() {
           </p>
           <p className="text-texto-suave">
             {resumen?.numeroVentas ?? 0} venta{resumen?.numeroVentas === 1 ? "" : "s"} en efectivo
-            {resumen && resumen.totalFiado > 0 && (
-              <> · ${resumen.totalFiado.toFixed(2)} fiados (no cuentan en la caja)</>
+            {resumen && (resumen.totalFiado > 0 || resumen.totalTarjeta > 0) && (
+              <>
+                {" · "}
+                {[
+                  resumen.totalTarjeta > 0 ? `$${resumen.totalTarjeta.toFixed(2)} con tarjeta` : null,
+                  resumen.totalFiado > 0 ? `$${resumen.totalFiado.toFixed(2)} fiados` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" y ")}{" "}
+                (no cuentan en la caja)
+              </>
             )}
           </p>
         </div>
@@ -161,12 +175,16 @@ export default function PaginaCorteCaja() {
             disabled={
               cerrando ||
               totalCapturado === "" ||
-              ((resumen?.numeroVentas ?? 0) === 0 && (resumen?.totalFiado ?? 0) === 0)
+              ((resumen?.numeroVentas ?? 0) === 0 &&
+                (resumen?.totalFiado ?? 0) === 0 &&
+                (resumen?.totalTarjeta ?? 0) === 0)
             }
           >
             {cerrando ? "Cerrando..." : "Cerrar corte"}
           </Boton>
-          {(resumen?.numeroVentas ?? 0) === 0 && (resumen?.totalFiado ?? 0) === 0 && (
+          {(resumen?.numeroVentas ?? 0) === 0 &&
+            (resumen?.totalFiado ?? 0) === 0 &&
+            (resumen?.totalTarjeta ?? 0) === 0 && (
             <p className="text-texto-suave text-sm text-center">
               No hay ventas nuevas desde el último corte.
             </p>

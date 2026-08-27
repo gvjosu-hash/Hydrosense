@@ -31,7 +31,13 @@ enum RolUsuario {
 
 enum MetodoPago {
   EFECTIVO
+  TARJETA
   FIADO
+}
+
+enum TipoTarjeta {
+  CREDITO
+  DEBITO
 }
 
 enum MotivoMerma {
@@ -121,8 +127,14 @@ model Venta {
   fecha          DateTime   @default(now())
   total          Decimal    @db.Decimal(10, 2)
   metodoPago     MetodoPago @default(EFECTIVO)
+  // EFECTIVO: monto que dio el cliente. TARJETA: monto cobrado en la
+  // terminal (normalmente igual al total).
   montoRecibido  Decimal?   @db.Decimal(10, 2)
   cambio         Decimal?   @db.Decimal(10, 2)
+  // Solo cuando metodoPago = TARJETA: no procesamos el cobro (eso lo hace
+  // la terminal física), solo registramos lo que ya imprimió el voucher.
+  tipoTarjeta        TipoTarjeta?
+  numeroAutorizacion String?
   // Solo cuando metodoPago = FIADO: a quién se le fió la venta.
   clienteId      String?
   cliente        Cliente?   @relation(fields: [clienteId], references: [id])

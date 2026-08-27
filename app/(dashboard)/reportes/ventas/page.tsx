@@ -11,11 +11,25 @@ interface Venta {
   id: string;
   fecha: string;
   total: string;
-  metodoPago: "EFECTIVO" | "FIADO";
+  metodoPago: "EFECTIVO" | "TARJETA" | "FIADO";
+  tipoTarjeta: "CREDITO" | "DEBITO" | null;
+  numeroAutorizacion: string | null;
   usuario: { nombre: string };
   cliente: { nombre: string } | null;
   items: { producto: { nombre: string }; cantidad: string }[];
 }
+
+const ETIQUETA_METODO: Record<Venta["metodoPago"], string> = {
+  EFECTIVO: "Efectivo",
+  TARJETA: "Tarjeta",
+  FIADO: "Fiado",
+};
+
+const TONO_METODO: Record<Venta["metodoPago"], "ok" | "neutral" | "alerta"> = {
+  EFECTIVO: "ok",
+  TARJETA: "neutral",
+  FIADO: "alerta",
+};
 
 function hoyISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -83,13 +97,14 @@ export default function PaginaRegistroVentas() {
                 {" · Atendió "}
                 {venta.usuario.nombre}
                 {venta.metodoPago === "FIADO" && venta.cliente ? ` · Fiado a ${venta.cliente.nombre}` : ""}
+                {venta.metodoPago === "TARJETA"
+                  ? ` · ${venta.tipoTarjeta === "CREDITO" ? "Crédito" : "Débito"} · Aut. ${venta.numeroAutorizacion}`
+                  : ""}
               </p>
             </div>
             <div className="text-right shrink-0">
               <p className="font-bold text-lg">${Number(venta.total).toFixed(2)}</p>
-              <Insignia tono={venta.metodoPago === "FIADO" ? "alerta" : "ok"}>
-                {venta.metodoPago === "FIADO" ? "Fiado" : "Efectivo"}
-              </Insignia>
+              <Insignia tono={TONO_METODO[venta.metodoPago]}>{ETIQUETA_METODO[venta.metodoPago]}</Insignia>
             </div>
           </Tarjeta>
         ))}

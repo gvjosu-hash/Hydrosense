@@ -15,6 +15,12 @@ interface ClienteResumen {
 
 export type ResultadoCobro =
   | { metodoPago: "EFECTIVO"; montoRecibido: number }
+  | {
+      metodoPago: "TARJETA";
+      montoRecibido: number;
+      tipoTarjeta: "CREDITO" | "DEBITO";
+      numeroAutorizacion: string;
+    }
   | { metodoPago: "FIADO"; clienteId: string };
 
 export function ModalCobro({
@@ -30,12 +36,17 @@ export function ModalCobro({
   cobrando?: boolean;
   error?: string;
 }) {
-  const [metodo, setMetodo] = useState<"EFECTIVO" | "FIADO">("EFECTIVO");
+  const [metodo, setMetodo] = useState<"EFECTIVO" | "TARJETA" | "FIADO">("EFECTIVO");
 
   const [valor, setValor] = useState("");
   const montoRecibido = parseFloat(valor || "0");
   const cambio = montoRecibido - total;
   const alcanza = montoRecibido >= total;
+
+  const [valorTarjeta, setValorTarjeta] = useState(() => total.toFixed(2));
+  const montoTarjeta = parseFloat(valorTarjeta || "0");
+  const [tipoTarjeta, setTipoTarjeta] = useState<"CREDITO" | "DEBITO">("CREDITO");
+  const [numeroAutorizacion, setNumeroAutorizacion] = useState("");
 
   const [busquedaCliente, setBusquedaCliente] = useState("");
   const [clientes, setClientes] = useState<ClienteResumen[]>([]);
@@ -87,12 +98,24 @@ export function ModalCobro({
   function confirmar() {
     if (metodo === "EFECTIVO") {
       onConfirmar({ metodoPago: "EFECTIVO", montoRecibido });
+    } else if (metodo === "TARJETA") {
+      onConfirmar({
+        metodoPago: "TARJETA",
+        montoRecibido: montoTarjeta,
+        tipoTarjeta,
+        numeroAutorizacion: numeroAutorizacion.trim(),
+      });
     } else if (clienteSeleccionado) {
       onConfirmar({ metodoPago: "FIADO", clienteId: clienteSeleccionado.id });
     }
   }
 
-  const puedeConfirmar = metodo === "EFECTIVO" ? alcanza : !!clienteSeleccionado;
+  const puedeConfirmar =
+    metodo === "EFECTIVO"
+      ? alcanza
+      : metodo === "TARJETA"
+      ? montoTarjeta > 0 && numeroAutorizacion.trim().length > 0
+      : !!clienteSeleccionado;
 
   return (
     <Modal titulo="Cobrar" onCerrar={onCerrar}>
@@ -101,7 +124,7 @@ export function ModalCobro({
           Total: <span className="font-bold">${total.toFixed(2)}</span>
         </p>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <button
             type="button"
             onClick={() => setMetodo("EFECTIVO")}
@@ -112,6 +135,17 @@ export function ModalCobro({
             }`}
           >
             Efectivo
+          </button>
+          <button
+            type="button"
+            onClick={() => setMetodo("TARJETA")}
+            className={`min-h-12 rounded-xl border-2 font-semibold cursor-pointer ${
+              metodo === "TARJETA"
+                ? "border-acento bg-acento-suave text-acento-fuerte"
+                : "border-borde-fuerte text-texto-suave"
+            }`}
+          >
+            Tarjeta
           </button>
           <button
             type="button"
@@ -143,6 +177,48 @@ export function ModalCobro({
               {alcanza ? `Cambio: $${cambio.toFixed(2)}` : "Falta efectivo"}
             </div>
           </>
+        ) : metodo === "TARJETA" ? (
+          <div className="flex flex-col gap-3">
+            <div className="text-center">
+              <p className="text-texto-suave">Monto cobrado en la terminal</p>
+              <p className="text-4xl font-bold tabular-nums">${valorTarjeta || "0"}</p>
+            </div>
+
+            <TecladoNumerico valor={valorTarjeta} onCambiar={setValorTarjeta} />
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setTipoTarjeta("CREDITO")}
+                className={`min-h-12 rounded-xl border-2 font-semibold cursor-pointer ${
+                  tipoTarjeta === "CREDITO"
+                    ? "border-acento bg-acento-suave text-acento-fuerte"
+                    : "border-borde-fuerte text-texto-suave"
+                }`}
+              >
+                Crédito
+              </button>
+              <button
+                type="button"
+                onClick={() => setTipoTarjeta("DEBITO")}
+                className={`min-h-12 rounded-xl border-2 font-semibold cursor-pointer ${
+                  tipoTarjeta === "DEBITO"
+                    ? "border-acento bg-acento-suave text-acento-fuerte"
+                    : "border-borde-fuerte text-texto-suave"
+                }`}
+              >
+                Débito
+              </button>
+            </div>
+
+            <Campo
+              etiqueta="Número de autorización"
+              placeholder="Del voucher que imprime la terminal"
+              value={numeroAutorizacion}
+              onChange={(e) => setNumeroAutorizacion(e.target.value)}
+              autoFocus
+            />
+          </div>
         ) : (
           <div className="flex flex-col gap-3">
             {!clienteSeleccionado ? (
@@ -233,7 +309,11 @@ export function ModalCobro({
             Cancelar
           </Boton>
           <Boton className="flex-1" disabled={!puedeConfirmar || cobrando} onClick={confirmar}>
-            {cobrando ? "Cobrando..." : metodo === "EFECTIVO" ? "Confirmar cobro" : "Registrar fiado"}
+            {cobrando
+              ? "Cobrando..."
+              : metodo === "FIADO"
+              ? "Registrar fiado"
+              : "Confirmar cobro"}
           </Boton>
         </div>
       </div>

@@ -84,6 +84,10 @@ export async function POST(request: Request) {
         );
       }
       cambio = montoRecibido.sub(total);
+    } else if (datos.metodoPago === "TARJETA") {
+      // La terminal física ya cobró: aquí solo se registra lo que imprimió
+      // el voucher, sin volver a validar contra el total.
+      montoRecibido = new Prisma.Decimal(datos.montoRecibido ?? 0);
     }
 
     if (datos.metodoPago === "FIADO") {
@@ -104,6 +108,9 @@ export async function POST(request: Request) {
           metodoPago: datos.metodoPago,
           montoRecibido: montoRecibido ?? undefined,
           cambio: cambio ?? undefined,
+          tipoTarjeta: datos.metodoPago === "TARJETA" ? datos.tipoTarjeta : undefined,
+          numeroAutorizacion:
+            datos.metodoPago === "TARJETA" ? datos.numeroAutorizacion : undefined,
           clienteId: datos.metodoPago === "FIADO" ? datos.clienteId : undefined,
           localId: datos.localId,
           items: {

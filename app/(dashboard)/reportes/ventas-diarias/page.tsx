@@ -11,6 +11,7 @@ interface DiaVentas {
   fecha: string;
   numeroVentas: number;
   totalEfectivo: number;
+  totalTarjeta: number;
   totalFiado: number;
   total: number;
 }
@@ -84,6 +85,7 @@ export default function PaginaVentasDiarias() {
               <p className="font-semibold capitalize">{formatoFechaCorta(d.fecha)}</p>
               <p className="text-texto-suave text-sm">
                 {d.numeroVentas} venta{d.numeroVentas === 1 ? "" : "s"}
+                {d.totalTarjeta > 0 ? ` · $${d.totalTarjeta.toFixed(2)} tarjeta` : ""}
                 {d.totalFiado > 0 ? ` · $${d.totalFiado.toFixed(2)} fiado` : ""}
               </p>
             </div>

@@ -18,9 +18,11 @@ const ETIQUETA_UNIDAD: Record<string, string> = {
 export interface VentaConfirmada {
   id: string;
   total: number;
-  metodoPago: "EFECTIVO" | "FIADO";
+  metodoPago: "EFECTIVO" | "TARJETA" | "FIADO";
   montoRecibido: number | null;
   cambio: number | null;
+  tipoTarjeta: "CREDITO" | "DEBITO" | null;
+  numeroAutorizacion: string | null;
   nombreCliente: string | null;
   whatsappCliente: string | null;
   nombreTienda: string;
@@ -98,7 +100,7 @@ export function TicketExito({ venta, onNuevaVenta }: { venta: VentaConfirmada; o
           <span>Total</span>
           <span>${venta.total.toFixed(2)}</span>
         </div>
-        {venta.montoRecibido !== null && (
+        {venta.metodoPago === "EFECTIVO" && venta.montoRecibido !== null && (
           <>
             <div className="flex justify-between text-texto-suave mt-1">
               <span>Recibido</span>
@@ -107,6 +109,18 @@ export function TicketExito({ venta, onNuevaVenta }: { venta: VentaConfirmada; o
             <div className="flex justify-between text-texto-suave">
               <span>Cambio</span>
               <span>${(venta.cambio ?? 0).toFixed(2)}</span>
+            </div>
+          </>
+        )}
+        {venta.metodoPago === "TARJETA" && (
+          <>
+            <div className="flex justify-between text-texto-suave mt-1">
+              <span>{venta.tipoTarjeta === "CREDITO" ? "Crédito" : "Débito"}</span>
+              <span>${(venta.montoRecibido ?? 0).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-texto-suave">
+              <span>Autorización</span>
+              <span>{venta.numeroAutorizacion}</span>
             </div>
           </>
         )}

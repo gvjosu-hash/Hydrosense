@@ -143,6 +143,8 @@ export default function PaginaPOS() {
         metodoPago: venta.metodoPago,
         montoRecibido: venta.montoRecibido !== null ? Number(venta.montoRecibido) : null,
         cambio: venta.cambio !== null ? Number(venta.cambio) : null,
+        tipoTarjeta: venta.tipoTarjeta ?? null,
+        numeroAutorizacion: venta.numeroAutorizacion ?? null,
         nombreCliente: venta.cliente?.nombre ?? null,
         whatsappCliente: venta.cliente?.whatsapp ?? null,
         nombreTienda: venta.tienda.nombre,

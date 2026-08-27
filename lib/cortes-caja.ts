@@ -15,6 +15,8 @@ export interface ResumenPendiente {
   totalSistema: number;
   numeroVentas: number;
   totalFiado: number;
+  // Con tarjeta el dinero va directo al banco, tampoco cuenta en la caja.
+  totalTarjeta: number;
   desglosePorMetodo: DesgloseMetodo[];
 }
 
@@ -34,6 +36,7 @@ export async function calcularResumenPendiente(tiendaId: string): Promise<Resume
 
   let totalSistema = new Prisma.Decimal(0);
   let totalFiado = new Prisma.Decimal(0);
+  let totalTarjeta = new Prisma.Decimal(0);
   let numeroVentas = 0;
   const acumuladoPorMetodo = new Map<string, { total: Prisma.Decimal; numeroVentas: number }>();
 
@@ -43,6 +46,8 @@ export async function calcularResumenPendiente(tiendaId: string): Promise<Resume
       numeroVentas += 1;
     } else if (venta.metodoPago === "FIADO") {
       totalFiado = totalFiado.add(venta.total);
+    } else if (venta.metodoPago === "TARJETA") {
+      totalTarjeta = totalTarjeta.add(venta.total);
     }
 
     const previo = acumuladoPorMetodo.get(venta.metodoPago) ?? {
@@ -61,6 +66,7 @@ export async function calcularResumenPendiente(tiendaId: string): Promise<Resume
     totalSistema: totalSistema.toNumber(),
     numeroVentas,
     totalFiado: totalFiado.toNumber(),
+    totalTarjeta: totalTarjeta.toNumber(),
     desglosePorMetodo: Array.from(acumuladoPorMetodo.entries()).map(([metodoPago, datos]) => ({
       metodoPago,
       total: datos.total.toNumber(),

@@ -24,18 +24,26 @@ export async function GET(request: Request) {
 
     const porDia = new Map<
       string,
-      { totalEfectivo: Prisma.Decimal; totalFiado: Prisma.Decimal; numeroVentas: number }
+      {
+        totalEfectivo: Prisma.Decimal;
+        totalTarjeta: Prisma.Decimal;
+        totalFiado: Prisma.Decimal;
+        numeroVentas: number;
+      }
     >();
 
     for (const venta of ventas) {
       const clave = inicioDeDia(venta.fecha);
       const previo = porDia.get(clave) ?? {
         totalEfectivo: new Prisma.Decimal(0),
+        totalTarjeta: new Prisma.Decimal(0),
         totalFiado: new Prisma.Decimal(0),
         numeroVentas: 0,
       };
       if (venta.metodoPago === "EFECTIVO") {
         previo.totalEfectivo = previo.totalEfectivo.add(venta.total);
+      } else if (venta.metodoPago === "TARJETA") {
+        previo.totalTarjeta = previo.totalTarjeta.add(venta.total);
       } else {
         previo.totalFiado = previo.totalFiado.add(venta.total);
       }
@@ -48,8 +56,9 @@ export async function GET(request: Request) {
         fecha,
         numeroVentas: datos.numeroVentas,
         totalEfectivo: datos.totalEfectivo.toNumber(),
+        totalTarjeta: datos.totalTarjeta.toNumber(),
         totalFiado: datos.totalFiado.toNumber(),
-        total: datos.totalEfectivo.add(datos.totalFiado).toNumber(),
+        total: datos.totalEfectivo.add(datos.totalTarjeta).add(datos.totalFiado).toNumber(),
       }))
       .sort((a, b) => b.fecha.localeCompare(a.fecha));
 
