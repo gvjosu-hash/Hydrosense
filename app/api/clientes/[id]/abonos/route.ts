@@ -18,17 +18,38 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const cuerpo = await request.json();
     const datos = esquemaAbono.parse(cuerpo);
 
-    const abono = await prisma.abono.create({
-      data: {
-        tiendaId: sesion.tiendaId,
-        clienteId: id,
-        monto: datos.monto,
-      },
+    // El saldo nunca debe quedar en negativo: no se puede abonar más de lo
+    // que el cliente debe. Se bloquea la fila del cliente dentro de la
+    // transacción para que dos abonos simultáneos no lean el mismo saldo
+    // "viejo" y entre los dos dejen la cuenta en negativo.
+    const resultado = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM clientes WHERE id = ${id} FOR UPDATE`;
+
+      const saldoActual = await calcularSaldoCliente(id, tx);
+      if (saldoActual.lessThanOrEqualTo(0)) {
+        throw new Error("Este cliente no tiene saldo pendiente");
+      }
+      if (datos.monto > saldoActual.toNumber()) {
+        throw new Error(`El abono no puede ser mayor a lo que debe ($${saldoActual.toFixed(2)})`);
+      }
+
+      const abono = await tx.abono.create({
+        data: {
+          tiendaId: sesion.tiendaId,
+          clienteId: id,
+          monto: datos.monto,
+          metodoPago: datos.metodoPago,
+          tipoTarjeta: datos.metodoPago === "TARJETA" ? datos.tipoTarjeta : undefined,
+          numeroAutorizacion:
+            datos.metodoPago === "TARJETA" ? datos.numeroAutorizacion : undefined,
+        },
+      });
+
+      const saldoPendiente = await calcularSaldoCliente(id, tx);
+      return { abono, saldoPendiente };
     });
 
-    const saldoPendiente = await calcularSaldoCliente(id);
-
-    return NextResponse.json({ abono, saldoPendiente }, { status: 201 });
+    return NextResponse.json(resultado, { status: 201 });
   } catch (error) {
     return respuestaError(error);
   }

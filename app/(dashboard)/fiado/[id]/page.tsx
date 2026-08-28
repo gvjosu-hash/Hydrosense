@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Tarjeta } from "@/components/ui/card";
 import { Boton } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
-import { ModalAbono } from "@/components/fiado/modal-abono";
+import { ModalAbono, ResultadoAbono } from "@/components/fiado/modal-abono";
 
 interface Cliente {
   id: string;
@@ -58,14 +58,14 @@ export default function PaginaClienteFiado() {
     return () => clearTimeout(temporizador);
   }, [cargar]);
 
-  async function registrarAbono(monto: number) {
+  async function registrarAbono(resultado: ResultadoAbono) {
     setGuardando(true);
     setError("");
     try {
       const respuesta = await fetch(`/api/clientes/${params.id}/abonos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ monto }),
+        body: JSON.stringify(resultado),
       });
       const datos = await respuesta.json();
       if (!respuesta.ok) {

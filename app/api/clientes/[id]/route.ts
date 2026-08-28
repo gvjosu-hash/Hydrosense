@@ -42,7 +42,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         id: a.id,
         fecha: a.fecha,
         monto: a.monto,
-        detalle: null,
+        detalle:
+          a.metodoPago === "TARJETA"
+            ? `Tarjeta (${a.tipoTarjeta === "CREDITO" ? "crédito" : "débito"}) · Aut. ${a.numeroAutorizacion}`
+            : "Efectivo",
       })),
     ].sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
 

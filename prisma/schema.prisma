@@ -40,6 +40,11 @@ enum TipoTarjeta {
   DEBITO
 }
 
+enum MetodoPagoAbono {
+  EFECTIVO
+  TARJETA
+}
+
 enum MotivoMerma {
   CADUCIDAD
   DANO
@@ -171,13 +176,18 @@ model Cliente {
 }
 
 model Abono {
-  id        String   @id @default(cuid())
+  id        String          @id @default(cuid())
   tiendaId  String
-  tienda    Tienda   @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
+  tienda    Tienda          @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
   clienteId String
-  cliente   Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
-  monto     Decimal  @db.Decimal(10, 2)
-  fecha     DateTime @default(now())
+  cliente   Cliente         @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  monto     Decimal         @db.Decimal(10, 2)
+  metodoPago         MetodoPagoAbono @default(EFECTIVO)
+  // Solo cuando metodoPago = TARJETA (misma lógica que en Venta: la
+  // terminal física ya cobró, aquí solo se registra el voucher).
+  tipoTarjeta        TipoTarjeta?
+  numeroAutorizacion String?
+  fecha     DateTime        @default(now())
 
   @@index([tiendaId, clienteId])
   @@map("abonos")

@@ -1,13 +1,18 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 
-export async function calcularSaldoCliente(clienteId: string): Promise<Prisma.Decimal> {
+type ClientePrisma = typeof prisma | Prisma.TransactionClient;
+
+export async function calcularSaldoCliente(
+  clienteId: string,
+  cliente: ClientePrisma = prisma
+): Promise<Prisma.Decimal> {
   const [ventasFiado, abonos] = await Promise.all([
-    prisma.venta.aggregate({
+    cliente.venta.aggregate({
       where: { clienteId, metodoPago: "FIADO" },
       _sum: { total: true },
     }),
-    prisma.abono.aggregate({
+    cliente.abono.aggregate({
       where: { clienteId },
       _sum: { monto: true },
     }),
