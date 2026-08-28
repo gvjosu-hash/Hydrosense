@@ -15,6 +15,8 @@ interface Resumen {
   numeroVentas: number;
   totalFiado: number;
   totalTarjeta: number;
+  totalAbonosEfectivo: number;
+  totalAbonosTarjeta: number;
   desglosePorMetodo: { metodoPago: string; total: number; numeroVentas: number }[];
 }
 
@@ -114,6 +116,9 @@ export default function PaginaCorteCaja() {
           </p>
           <p className="text-texto-suave">
             {resumen?.numeroVentas ?? 0} venta{resumen?.numeroVentas === 1 ? "" : "s"} en efectivo
+            {resumen && resumen.totalAbonosEfectivo > 0 && (
+              <> + ${resumen.totalAbonosEfectivo.toFixed(2)} en abonos</>
+            )}
             {resumen && (resumen.totalFiado > 0 || resumen.totalTarjeta > 0) && (
               <>
                 {" · "}
@@ -129,18 +134,33 @@ export default function PaginaCorteCaja() {
           </p>
         </div>
 
-        {resumen && resumen.desglosePorMetodo.length > 0 && (
-          <div className="flex flex-col gap-1 border-t border-borde pt-3">
-            {resumen.desglosePorMetodo.map((d) => (
-              <div key={d.metodoPago} className="flex justify-between text-sm">
-                <span>
-                  {ETIQUETA_METODO[d.metodoPago] ?? d.metodoPago} ({d.numeroVentas})
-                </span>
-                <span className="font-medium">${d.total.toFixed(2)}</span>
-              </div>
-            ))}
-          </div>
-        )}
+        {resumen &&
+          (resumen.desglosePorMetodo.length > 0 ||
+            resumen.totalAbonosEfectivo > 0 ||
+            resumen.totalAbonosTarjeta > 0) && (
+            <div className="flex flex-col gap-1 border-t border-borde pt-3">
+              {resumen.desglosePorMetodo.map((d) => (
+                <div key={d.metodoPago} className="flex justify-between text-sm">
+                  <span>
+                    {ETIQUETA_METODO[d.metodoPago] ?? d.metodoPago} ({d.numeroVentas})
+                  </span>
+                  <span className="font-medium">${d.total.toFixed(2)}</span>
+                </div>
+              ))}
+              {resumen.totalAbonosEfectivo > 0 && (
+                <div className="flex justify-between text-sm text-texto-suave">
+                  <span>Abonos en efectivo</span>
+                  <span className="font-medium">${resumen.totalAbonosEfectivo.toFixed(2)}</span>
+                </div>
+              )}
+              {resumen.totalAbonosTarjeta > 0 && (
+                <div className="flex justify-between text-sm text-texto-suave">
+                  <span>Abonos con tarjeta</span>
+                  <span className="font-medium">${resumen.totalAbonosTarjeta.toFixed(2)}</span>
+                </div>
+              )}
+            </div>
+          )}
 
         <div className="border-t border-borde pt-4 flex flex-col gap-3">
           <Campo
@@ -175,14 +195,14 @@ export default function PaginaCorteCaja() {
             disabled={
               cerrando ||
               totalCapturado === "" ||
-              ((resumen?.numeroVentas ?? 0) === 0 &&
+              ((resumen?.totalSistema ?? 0) === 0 &&
                 (resumen?.totalFiado ?? 0) === 0 &&
                 (resumen?.totalTarjeta ?? 0) === 0)
             }
           >
             {cerrando ? "Cerrando..." : "Cerrar corte"}
           </Boton>
-          {(resumen?.numeroVentas ?? 0) === 0 &&
+          {(resumen?.totalSistema ?? 0) === 0 &&
             (resumen?.totalFiado ?? 0) === 0 &&
             (resumen?.totalTarjeta ?? 0) === 0 && (
             <p className="text-texto-suave text-sm text-center">
