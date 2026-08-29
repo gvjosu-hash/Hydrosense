@@ -63,6 +63,9 @@ model Tienda {
   id        String   @id @default(cuid())
   nombre    String
   esDemo    Boolean  @default(false)
+  // Tienda con acceso permanente sin importar el estado de su suscripción
+  // (cuenta propia para pruebas y cambios, nunca se bloquea).
+  exentaDePago Boolean @default(false)
   createdAt DateTime @default(now())
 
   usuarios    Usuario[]

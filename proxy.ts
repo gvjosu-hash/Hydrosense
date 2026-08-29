@@ -12,6 +12,9 @@ export async function proxy(request: NextRequest) {
     // Enlace de ticket que se manda al cliente por WhatsApp: no tiene sesión
     // propia, así que esta ruta se valida solo con el id (ver su código).
     pathname.startsWith("/api/tickets") ||
+    // Mercado Pago llama esto directo, sin sesión de Xolo; se valida con
+    // firma propia (ver lib/mercadopago-firma.ts).
+    pathname.startsWith("/api/webhooks") ||
     pathname.startsWith("/_next")
   ) {
     return NextResponse.next();

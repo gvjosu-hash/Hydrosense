@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { COOKIE_SESION, firmarSesion, hashearPassword, opcionesCookieSesion } from "@/lib/auth";
 import { respuestaError } from "@/lib/api-utils";
 import { catalogoInicial } from "@/lib/catalogo-inicial";
+import { DIAS_PRUEBA_GRATIS } from "@/lib/mercadopago";
 
 const esquemaRegistro = z.object({
   nombreTienda: z.string().trim().min(2, "El nombre de la tienda es muy corto"),
@@ -86,6 +87,16 @@ export async function POST(request: Request) {
           })),
         });
       }
+      const ahora = new Date();
+      const fechaFinPrueba = new Date(ahora.getTime() + DIAS_PRUEBA_GRATIS * 24 * 60 * 60 * 1000);
+      await tx.suscripcion.create({
+        data: {
+          tiendaId: tienda.id,
+          estado: "PRUEBA",
+          fechaInicioPrueba: ahora,
+          fechaFinPrueba,
+        },
+      });
       return { tienda, usuario };
     });
 
