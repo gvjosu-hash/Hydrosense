@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Tarjeta } from "@/components/ui/card";
 import { Boton } from "@/components/ui/button";
 import { Campo } from "@/components/ui/input";
-import { FormularioTarjeta } from "@/components/suscripcion/formulario-tarjeta";
 
 type Estado = "PRUEBA" | "ACTIVA" | "PAGO_FALLIDO" | "CANCELADA" | null;
 
@@ -33,7 +32,6 @@ export function PanelSuscripcion({
   const [cargando, setCargando] = useState(false);
   const [cancelando, setCancelando] = useState(false);
   const [error, setError] = useState("");
-  const [usarRedireccion, setUsarRedireccion] = useState(false);
 
   const enPrueba = estado === "PRUEBA" && diasRestantesPrueba !== null;
 
@@ -139,44 +137,21 @@ export function PanelSuscripcion({
 
           <p className="text-center text-texto-suave">${precioMensual.toFixed(2)} MXN al mes</p>
 
-          {usarRedireccion ? (
-            <>
-              {!correoConocido && (
-                <Campo
-                  etiqueta="Correo para tu suscripción"
-                  type="email"
-                  value={correo}
-                  onChange={(e) => setCorreo(e.target.value)}
-                  autoFocus
-                />
-              )}
-
-              {error && <p className="text-peligro font-medium text-center">{error}</p>}
-
-              <Boton tamano="grande" disabled={cargando} onClick={suscribirse}>
-                {cargando ? "Redirigiendo..." : "Suscribirme con Mercado Pago"}
-              </Boton>
-              <button
-                onClick={() => setUsarRedireccion(false)}
-                className="text-acento font-semibold text-sm cursor-pointer"
-              >
-                Volver al formulario de tarjeta
-              </button>
-            </>
-          ) : (
-            <>
-              <FormularioTarjeta
-                correoInicial={correoConocido ?? ""}
-                onAutorizada={() => router.refresh()}
-              />
-              <button
-                onClick={() => setUsarRedireccion(true)}
-                className="text-texto-suave text-sm cursor-pointer"
-              >
-                O suscríbete desde el sitio de Mercado Pago
-              </button>
-            </>
+          {!correoConocido && (
+            <Campo
+              etiqueta="Correo para tu suscripción"
+              type="email"
+              value={correo}
+              onChange={(e) => setCorreo(e.target.value)}
+              autoFocus
+            />
           )}
+
+          {error && <p className="text-peligro font-medium text-center">{error}</p>}
+
+          <Boton tamano="grande" disabled={cargando} onClick={suscribirse}>
+            {cargando ? "Redirigiendo..." : "Suscribirme con Mercado Pago"}
+          </Boton>
         </>
       )}
 
