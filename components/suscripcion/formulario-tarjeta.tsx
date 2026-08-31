@@ -3,20 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { Campo } from "@/components/ui/input";
-import { Selector } from "@/components/ui/select";
 import { Boton } from "@/components/ui/button";
-
-interface TipoIdentificacion {
-  id: string;
-  name: string;
-}
 
 interface CampoSeguro {
   mount: (contenedorId: string) => CampoSeguro;
 }
 
 interface ClienteMercadoPago {
-  getIdentificationTypes: () => Promise<TipoIdentificacion[]>;
   fields: {
     create: (tipo: string, opciones: Record<string, unknown>) => CampoSeguro;
     createCardToken: (datos: Record<string, string>) => Promise<{ id: string }>;
@@ -65,12 +58,14 @@ export function FormularioTarjeta({
   const [sdkListo, setSdkListo] = useState(false);
   const mpRef = useRef<ClienteMercadoPago | null>(null);
   const camposMontados = useRef(false);
-  const [tiposIdentificacion, setTiposIdentificacion] = useState<TipoIdentificacion[]>([]);
-  const [identificacionNoDisponible, setIdentificacionNoDisponible] = useState(false);
 
   const [correo, setCorreo] = useState(correoInicial);
   const [nombreTitular, setNombreTitular] = useState("");
-  const [tipoIdentificacion, setTipoIdentificacion] = useState("");
+  // "RFC" precargado: es el tipo de identificación más común en México y
+  // Mercado Pago parece necesitarlo para autorizar el cobro (aunque el
+  // formulario lo marque como "opcional"). Se deja editable por si el
+  // titular necesita otro tipo (CURP, pasaporte, etc.).
+  const [tipoIdentificacion, setTipoIdentificacion] = useState("RFC");
   const [numeroIdentificacion, setNumeroIdentificacion] = useState("");
 
   const [enviando, setEnviando] = useState(false);
@@ -109,16 +104,6 @@ export function FormularioTarjeta({
     cliente.fields
       .create("securityCode", { placeholder: "CVV", style: ESTILO_CAMPO_SEGURO })
       .mount("mp-cvv");
-
-    cliente
-      .getIdentificationTypes()
-      .then((tipos) => {
-        setTiposIdentificacion(tipos);
-        if (tipos[0]) setTipoIdentificacion(tipos[0].id);
-      })
-      .catch(() => setIdentificacionNoDisponible(true));
-    const limite = setTimeout(() => setIdentificacionNoDisponible(true), 6000);
-    return () => clearTimeout(limite);
   }, [sdkListo]);
 
   async function enviar(e: React.FormEvent) {
@@ -134,18 +119,18 @@ export function FormularioTarjeta({
       setError("Escribe un correo para continuar");
       return;
     }
+    if (!tipoIdentificacion.trim() || !numeroIdentificacion.trim()) {
+      setError("Escribe tu identificación (RFC, CURP u otra)");
+      return;
+    }
 
     setEnviando(true);
     try {
       const datosToken: Record<string, string> = {
         cardholderName: nombreTitular.trim(),
+        identificationType: tipoIdentificacion.trim(),
+        identificationNumber: numeroIdentificacion.trim(),
       };
-      // Si el tipo de identificación no cargó, se manda el token sin esos
-      // campos en vez de mandarlos vacíos (que Mercado Pago sí rechaza).
-      if (tipoIdentificacion && numeroIdentificacion.trim()) {
-        datosToken.identificationType = tipoIdentificacion;
-        datosToken.identificationNumber = numeroIdentificacion.trim();
-      }
 
       let token;
       try {
@@ -222,24 +207,18 @@ export function FormularioTarjeta({
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <Selector
-            etiqueta="Identificación (opcional)"
+          <Campo
+            etiqueta="Tipo de identificación"
+            placeholder="RFC, CURP, etc."
             value={tipoIdentificacion}
             onChange={(e) => setTipoIdentificacion(e.target.value)}
-          >
-            {tiposIdentificacion.length === 0 && (
-              <option value="">{identificacionNoDisponible ? "No disponible" : "Cargando…"}</option>
-            )}
-            {tiposIdentificacion.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </Selector>
+            required
+          />
           <Campo
-            etiqueta="Número (opcional)"
+            etiqueta="Número de identificación"
             value={numeroIdentificacion}
             onChange={(e) => setNumeroIdentificacion(e.target.value)}
+            required
           />
         </div>
 
