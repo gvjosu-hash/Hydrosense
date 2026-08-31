@@ -66,9 +66,12 @@ export async function POST(request: Request) {
         reason: "Xolo - Suscripción mensual",
         external_reference: tienda.id,
         payer_email: correo,
+        // Mercado Pago exige back_url siempre, aunque la tarjeta ya venga
+        // tokenizada y no haya redirección real.
+        back_url: `${origen}/suscripcion`,
         ...(usaFormularioEmbebido
           ? { card_token_id: datos.cardTokenId, status: "authorized" }
-          : { back_url: `${origen}/suscripcion` }),
+          : {}),
         auto_recurring: {
           // 30 días fijos, no "1 mes": así el cobro no se recorre según el
           // mes tenga 28, 30 o 31 días.
