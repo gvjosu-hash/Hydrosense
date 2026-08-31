@@ -14,6 +14,7 @@ export async function GET() {
       id: true,
       nombre: true,
       rol: true,
+      esAdminPlataforma: true,
       tienda: { select: { id: true, nombre: true, esDemo: true } },
     },
   });

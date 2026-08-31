@@ -14,6 +14,7 @@ export default function PaginaLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
+  const [mostrarEleccionModo, setMostrarEleccionModo] = useState(false);
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -30,6 +31,10 @@ export default function PaginaLogin() {
         setError(datos.error ?? "No pudimos iniciar tu sesión");
         return;
       }
+      if (datos.usuario?.esAdminPlataforma) {
+        setMostrarEleccionModo(true);
+        return;
+      }
       router.push("/pos");
       router.refresh();
     } catch {
@@ -37,6 +42,33 @@ export default function PaginaLogin() {
     } finally {
       setCargando(false);
     }
+  }
+
+  function irA(destino: "/pos" | "/admin") {
+    router.push(destino);
+    router.refresh();
+  }
+
+  if (mostrarEleccionModo) {
+    return (
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md flex flex-col items-center gap-4 mb-6">
+          <Xolo className="w-16 h-auto" />
+          <h1 className="text-3xl font-bold text-center">¿Cómo quieres entrar?</h1>
+          <p className="text-texto-suave text-center">
+            Esta cuenta tiene acceso vitalicio y al panel de administrador.
+          </p>
+        </div>
+        <Tarjeta className="w-full max-w-md p-6 flex flex-col gap-3">
+          <Boton tamano="grande" onClick={() => irA("/pos")}>
+            Modo prueba (como una tienda normal)
+          </Boton>
+          <Boton tamano="grande" variante="secundario" onClick={() => irA("/admin")}>
+            Administrador (suscripciones y pagos)
+          </Boton>
+        </Tarjeta>
+      </main>
+    );
   }
 
   return (

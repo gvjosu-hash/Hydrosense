@@ -76,6 +76,7 @@ model Tienda {
   abonos      Abono[]
   mermas      Merma[]
   suscripcion Suscripcion?
+  pagos       Pago[]
 
   @@map("tiendas")
 }
@@ -89,6 +90,9 @@ model Usuario {
   passwordHash  String
   nombre        String
   rol           RolUsuario @default(DUENO)
+  // Acceso al panel /admin (conteo de suscripciones, acumulado de pagos).
+  // Solo la cuenta vitalicia del equipo de Xolo debe tener esto en true.
+  esAdminPlataforma Boolean @default(false)
   createdAt     DateTime   @default(now())
 
   ventas Venta[]
@@ -255,4 +259,23 @@ model Suscripcion {
   updatedAt           DateTime          @updatedAt
 
   @@map("suscripciones")
+}
+
+// Un cobro real ya aprobado por Mercado Pago (no la suscripción en sí, sino
+// cada cargo mensual que efectivamente se acreditó). Se llena desde el
+// webhook cuando llega una notificación type=payment con status=approved.
+// Sirve para el panel /admin: saber cuánto se ha acumulado para el próximo
+// depósito, no solo cuántas tiendas están "activas".
+model Pago {
+  id          String   @id @default(cuid())
+  tiendaId    String
+  tienda      Tienda   @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
+  mpPaymentId String   @unique
+  monto       Decimal  @db.Decimal(10, 2)
+  fecha       DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([tiendaId])
+  @@index([fecha])
+  @@map("pagos")
 }

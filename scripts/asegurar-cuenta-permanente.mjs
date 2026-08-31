@@ -161,7 +161,12 @@ async function main() {
       await client.query(`UPDATE tiendas SET "exentaDePago" = true WHERE id = $1`, [
         rows[0].tiendaId,
       ]);
-      console.log("asegurar-cuenta-permanente: la cuenta ya existía, se confirmó exentaDePago.");
+      await client.query(`UPDATE usuarios SET "esAdminPlataforma" = true WHERE id = $1`, [
+        rows[0].usuarioId,
+      ]);
+      console.log(
+        "asegurar-cuenta-permanente: la cuenta ya existía, se confirmó exentaDePago y esAdminPlataforma."
+      );
       return;
     }
 
@@ -176,8 +181,8 @@ async function main() {
         [tiendaId, NOMBRE_TIENDA]
       );
       await client.query(
-        `INSERT INTO usuarios (id, "tiendaId", correo, whatsapp, "passwordHash", nombre, rol, "createdAt")
-         VALUES ($1, $2, NULL, $3, $4, $5, 'DUENO', now())`,
+        `INSERT INTO usuarios (id, "tiendaId", correo, whatsapp, "passwordHash", nombre, rol, "esAdminPlataforma", "createdAt")
+         VALUES ($1, $2, NULL, $3, $4, $5, 'DUENO', true, now())`,
         [usuarioId, tiendaId, WHATSAPP, PASSWORD_HASH, NOMBRE_USUARIO]
       );
       for (const [indice, producto] of CATALOGO_INICIAL.entries()) {

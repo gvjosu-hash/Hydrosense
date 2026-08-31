@@ -57,8 +57,10 @@ export async function POST(request: Request) {
         payer_email: correo,
         back_url: `${origen}/suscripcion`,
         auto_recurring: {
-          frequency: 1,
-          frequency_type: "months",
+          // 30 días fijos, no "1 mes": así el cobro no se recorre según el
+          // mes tenga 28, 30 o 31 días.
+          frequency: 30,
+          frequency_type: "days",
           start_date: inicioCobro.toISOString(),
           transaction_amount: PRECIO_SUSCRIPCION_MXN,
           currency_id: "MXN",

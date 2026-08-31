@@ -1,9 +1,69 @@
 import { NextResponse } from "next/server";
-import { PreApproval } from "mercadopago";
+import { Payment, PreApproval } from "mercadopago";
 import { prisma } from "@/lib/db";
 import { obtenerClienteMercadoPago } from "@/lib/mercadopago";
 import { estadoDesdeMercadoPago } from "@/lib/suscripcion";
 import { validarFirmaWebhook } from "@/lib/mercadopago-firma";
+
+async function procesarPreapproval(dataId: string) {
+  const cliente = obtenerClienteMercadoPago();
+  const preapproval = await new PreApproval(cliente).get({ id: dataId });
+
+  const tiendaId = preapproval.external_reference;
+  if (!tiendaId) return;
+
+  const nuevoEstado = estadoDesdeMercadoPago(preapproval.status);
+  if (!nuevoEstado) return;
+
+  await prisma.suscripcion.upsert({
+    where: { tiendaId },
+    update: {
+      estado: nuevoEstado,
+      mpPreapprovalId: preapproval.id,
+      fechaProximoCobro: preapproval.next_payment_date
+        ? new Date(preapproval.next_payment_date)
+        : undefined,
+    },
+    create: {
+      tiendaId,
+      estado: nuevoEstado,
+      mpPreapprovalId: preapproval.id,
+      fechaProximoCobro: preapproval.next_payment_date
+        ? new Date(preapproval.next_payment_date)
+        : undefined,
+    },
+  });
+}
+
+// Registra el cobro ya acreditado (no el estado de la suscripción, sino el
+// dinero que de verdad entró) para que el panel /admin pueda sumar cuánto
+// se ha acumulado para el próximo depósito. Mercado Pago propaga el
+// external_reference del preapproval a cada pago generado por él.
+async function procesarPago(dataId: string) {
+  const cliente = obtenerClienteMercadoPago();
+  const pago = await new Payment(cliente).get({ id: dataId });
+
+  if (pago.status !== "approved") return;
+
+  const tiendaId = pago.external_reference;
+  const monto = pago.transaction_amount;
+  const paymentId = pago.id;
+  if (!tiendaId || monto === undefined || paymentId === undefined) return;
+
+  const tienda = await prisma.tienda.findUnique({ where: { id: tiendaId }, select: { id: true } });
+  if (!tienda) return;
+
+  await prisma.pago.upsert({
+    where: { mpPaymentId: String(paymentId) },
+    update: {},
+    create: {
+      tiendaId,
+      mpPaymentId: String(paymentId),
+      monto,
+      fecha: pago.date_approved ? new Date(pago.date_approved) : new Date(),
+    },
+  });
+}
 
 // Ruta pública: Mercado Pago llama esto directo, sin sesión de Xolo. Está
 // permitida en proxy.ts junto con /api/tickets.
@@ -15,9 +75,11 @@ export async function POST(request: Request) {
     const tipo = cuerpo.type ?? searchParams.get("type") ?? searchParams.get("topic");
     const dataId = cuerpo.data?.id ?? searchParams.get("data.id") ?? searchParams.get("id");
 
-    if (tipo !== "preapproval" && tipo !== "subscription_preapproval") {
-      // No es una notificación de suscripción (puede ser un pago suelto u
-      // otro topic): no hay nada que hacer aquí.
+    const esPreapproval = tipo === "preapproval" || tipo === "subscription_preapproval";
+    const esPago = tipo === "payment";
+
+    if (!esPreapproval && !esPago) {
+      // Otro topic que no nos interesa: no hay nada que hacer aquí.
       return NextResponse.json({ recibido: true });
     }
     if (!dataId) {
@@ -33,37 +95,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Firma inválida" }, { status: 401 });
     }
 
-    const cliente = obtenerClienteMercadoPago();
-    const preapproval = await new PreApproval(cliente).get({ id: String(dataId) });
-
-    const tiendaId = preapproval.external_reference;
-    if (!tiendaId) {
-      return NextResponse.json({ recibido: true });
+    if (esPreapproval) {
+      await procesarPreapproval(String(dataId));
+    } else {
+      await procesarPago(String(dataId));
     }
-
-    const nuevoEstado = estadoDesdeMercadoPago(preapproval.status);
-    if (!nuevoEstado) {
-      return NextResponse.json({ recibido: true });
-    }
-
-    await prisma.suscripcion.upsert({
-      where: { tiendaId },
-      update: {
-        estado: nuevoEstado,
-        mpPreapprovalId: preapproval.id,
-        fechaProximoCobro: preapproval.next_payment_date
-          ? new Date(preapproval.next_payment_date)
-          : undefined,
-      },
-      create: {
-        tiendaId,
-        estado: nuevoEstado,
-        mpPreapprovalId: preapproval.id,
-        fechaProximoCobro: preapproval.next_payment_date
-          ? new Date(preapproval.next_payment_date)
-          : undefined,
-      },
-    });
 
     return NextResponse.json({ recibido: true });
   } catch (error) {

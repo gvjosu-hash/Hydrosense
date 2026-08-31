@@ -40,7 +40,13 @@ export async function POST(request: Request) {
     const almacenCookies = await cookies();
     almacenCookies.set(COOKIE_SESION, token, opcionesCookieSesion);
 
-    return NextResponse.json({ usuario: { id: usuario.id, nombre: usuario.nombre } });
+    return NextResponse.json({
+      usuario: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        esAdminPlataforma: usuario.esAdminPlataforma,
+      },
+    });
   } catch (error) {
     return respuestaError(error);
   }
