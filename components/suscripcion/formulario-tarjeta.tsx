@@ -147,7 +147,13 @@ export function FormularioTarjeta({
         datosToken.identificationNumber = numeroIdentificacion.trim();
       }
 
-      const token = await mp.fields.createCardToken(datosToken);
+      let token;
+      try {
+        token = await mp.fields.createCardToken(datosToken);
+      } catch (errToken) {
+        setError(`[Al generar el token] ${mensajeErrorTarjeta(errToken)}`);
+        return;
+      }
 
       const respuesta = await fetch("/api/suscripcion/crear", {
         method: "POST",
@@ -156,7 +162,7 @@ export function FormularioTarjeta({
       });
       const datos = await respuesta.json();
       if (!respuesta.ok) {
-        setError(datos.error ?? "No se pudo activar la suscripción");
+        setError(`[Al crear la suscripción] ${datos.error ?? "No se pudo activar la suscripción"}`);
         return;
       }
       onAutorizada();
