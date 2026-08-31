@@ -45,9 +45,15 @@ export async function POST(request: Request) {
     }
 
     const origen = new URL(request.url).origin;
+    // Mercado Pago rechaza un start_date que para cuando su API valida la
+    // solicitud ya "pasó" (aunque al generarlo aquí fuera exactamente
+    // "ahora"): unos minutos de margen evitan ese choque de tiempos.
+    const MARGEN_INICIO_COBRO_MS = 5 * 60 * 1000;
     const fechaFinPrueba = tienda.suscripcion?.fechaFinPrueba ?? null;
     const inicioCobro =
-      fechaFinPrueba && fechaFinPrueba.getTime() > Date.now() ? fechaFinPrueba : new Date();
+      fechaFinPrueba && fechaFinPrueba.getTime() > Date.now() + MARGEN_INICIO_COBRO_MS
+        ? fechaFinPrueba
+        : new Date(Date.now() + MARGEN_INICIO_COBRO_MS);
 
     const cliente = obtenerClienteMercadoPago();
     const preapproval = await new PreApproval(cliente).create({
