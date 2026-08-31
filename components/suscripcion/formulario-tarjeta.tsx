@@ -58,6 +58,22 @@ export function FormularioTarjeta({
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState("");
 
+  // El <Script> de Next solo avisa onLoad la primera vez que el script se
+  // inyecta en la página. Si el usuario ya había cargado esta pantalla antes
+  // (el script sigue en el navegador) o navega de regreso, onLoad nunca
+  // vuelve a dispararse y el formulario se queda en "Cargando..." para
+  // siempre. Este efecto revisa directamente si window.MercadoPago ya
+  // existe (o va apareciendo) sin depender de ese evento.
+  useEffect(() => {
+    const intervalo = setInterval(() => {
+      if (window.MercadoPago) {
+        setSdkListo(true);
+        clearInterval(intervalo);
+      }
+    }, 200);
+    return () => clearInterval(intervalo);
+  }, []);
+
   useEffect(() => {
     if (!sdkListo || !PUBLIC_KEY || !window.MercadoPago) return;
     const cliente = new window.MercadoPago(PUBLIC_KEY, { locale: "es-MX" });
