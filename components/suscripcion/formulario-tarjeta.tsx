@@ -11,9 +11,16 @@ interface TipoIdentificacion {
   name: string;
 }
 
+interface CampoSeguro {
+  mount: (contenedorId: string) => CampoSeguro;
+}
+
 interface ClienteMercadoPago {
   getIdentificationTypes: () => Promise<TipoIdentificacion[]>;
-  createCardToken: (datos: Record<string, string>) => Promise<{ id: string }>;
+  fields: {
+    create: (tipo: string, opciones: Record<string, unknown>) => CampoSeguro;
+    createCardToken: (datos: Record<string, string>) => Promise<{ id: string }>;
+  };
 }
 
 declare global {
@@ -27,10 +34,23 @@ declare global {
 
 const PUBLIC_KEY = process.env.NEXT_PUBLIC_MP_PUBLIC_KEY;
 
+// Colores literales (no variables CSS: los "Secure Fields" son iframes de
+// Mercado Pago, no leen el CSS de esta página).
+const ESTILO_CAMPO_SEGURO = {
+  fontSize: "18px",
+  color: "#211f1a",
+  placeholderColor: "#5f5b52",
+};
+
+const CLASE_CONTENEDOR_SEGURO =
+  "px-4 py-3 min-h-12 rounded-xl border-2 border-borde-fuerte bg-superficie";
+
 function mensajeErrorTarjeta(error: unknown): string {
   const causas = (error as { cause?: { code?: string; description?: string }[] })?.cause;
   if (Array.isArray(causas) && causas.length > 0) {
-    return causas.map((c) => c.description).filter(Boolean).join(". ") || "Revisa los datos de tu tarjeta.";
+    return (
+      causas.map((c) => c.description).filter(Boolean).join(". ") || "Revisa los datos de tu tarjeta."
+    );
   }
   return "No pudimos validar tu tarjeta. Revisa los datos e intenta de nuevo.";
 }
@@ -44,15 +64,12 @@ export function FormularioTarjeta({
 }) {
   const [sdkListo, setSdkListo] = useState(false);
   const mpRef = useRef<ClienteMercadoPago | null>(null);
+  const camposMontados = useRef(false);
   const [tiposIdentificacion, setTiposIdentificacion] = useState<TipoIdentificacion[]>([]);
   const [identificacionNoDisponible, setIdentificacionNoDisponible] = useState(false);
 
   const [correo, setCorreo] = useState(correoInicial);
-  const [numeroTarjeta, setNumeroTarjeta] = useState("");
   const [nombreTitular, setNombreTitular] = useState("");
-  const [mesVencimiento, setMesVencimiento] = useState("");
-  const [anioVencimiento, setAnioVencimiento] = useState("");
-  const [cvv, setCvv] = useState("");
   const [tipoIdentificacion, setTipoIdentificacion] = useState("");
   const [numeroIdentificacion, setNumeroIdentificacion] = useState("");
 
@@ -60,11 +77,8 @@ export function FormularioTarjeta({
   const [error, setError] = useState("");
 
   // El <Script> de Next solo avisa onLoad la primera vez que el script se
-  // inyecta en la página. Si el usuario ya había cargado esta pantalla antes
-  // (el script sigue en el navegador) o navega de regreso, onLoad nunca
-  // vuelve a dispararse y el formulario se queda en "Cargando..." para
-  // siempre. Este efecto revisa directamente si window.MercadoPago ya
-  // existe (o va apareciendo) sin depender de ese evento.
+  // inyecta en la página; si ya estaba cargado (vuelta a esta pantalla) no
+  // vuelve a dispararse. Se revisa directo si window.MercadoPago existe.
   useEffect(() => {
     const intervalo = setInterval(() => {
       if (window.MercadoPago) {
@@ -76,20 +90,33 @@ export function FormularioTarjeta({
   }, []);
 
   useEffect(() => {
-    if (!sdkListo || !PUBLIC_KEY || !window.MercadoPago) return;
+    if (!sdkListo || !PUBLIC_KEY || !window.MercadoPago || camposMontados.current) return;
+    camposMontados.current = true;
+
     const cliente = new window.MercadoPago(PUBLIC_KEY, { locale: "es-MX" });
     mpRef.current = cliente;
+
+    // Número de tarjeta, vencimiento y CVV se capturan en "Secure Fields":
+    // iframes que controla Mercado Pago directamente, para que esos datos
+    // nunca pasen por el código de esta página (cumplimiento PCI). Por eso
+    // no hay estado de React para esos tres valores.
+    cliente.fields
+      .create("cardNumber", { placeholder: "0000 0000 0000 0000", style: ESTILO_CAMPO_SEGURO })
+      .mount("mp-numero-tarjeta");
+    cliente.fields
+      .create("expirationDate", { placeholder: "MM/AA", style: ESTILO_CAMPO_SEGURO })
+      .mount("mp-vencimiento");
+    cliente.fields
+      .create("securityCode", { placeholder: "CVV", style: ESTILO_CAMPO_SEGURO })
+      .mount("mp-cvv");
+
     cliente
       .getIdentificationTypes()
       .then((tipos) => {
         setTiposIdentificacion(tipos);
         if (tipos[0]) setTipoIdentificacion(tipos[0].id);
       })
-      .catch(() => {
-        setIdentificacionNoDisponible(true);
-      });
-    // Si en unos segundos no llegó respuesta, se deja de mostrar "Cargando…"
-    // (es un campo opcional, no debe parecer trabado para siempre).
+      .catch(() => setIdentificacionNoDisponible(true));
     const limite = setTimeout(() => setIdentificacionNoDisponible(true), 6000);
     return () => clearTimeout(limite);
   }, [sdkListo]);
@@ -110,26 +137,17 @@ export function FormularioTarjeta({
 
     setEnviando(true);
     try {
-      // La tarjeta física trae el año en 2 dígitos (ej. "33"); Mercado Pago
-      // necesita el año completo (2033), si no la tokenización falla.
-      const anioLimpio = anioVencimiento.trim();
-      const anioCompleto = anioLimpio.length === 2 ? `20${anioLimpio}` : anioLimpio;
-
-      const datosTarjeta: Record<string, string> = {
-        cardNumber: numeroTarjeta.replace(/\s+/g, ""),
+      const datosToken: Record<string, string> = {
         cardholderName: nombreTitular.trim(),
-        cardExpirationMonth: mesVencimiento.trim(),
-        cardExpirationYear: anioCompleto,
-        securityCode: cvv.trim(),
       };
       // Si el tipo de identificación no cargó, se manda el token sin esos
       // campos en vez de mandarlos vacíos (que Mercado Pago sí rechaza).
       if (tipoIdentificacion && numeroIdentificacion.trim()) {
-        datosTarjeta.identificationType = tipoIdentificacion;
-        datosTarjeta.identificationNumber = numeroIdentificacion.trim();
+        datosToken.identificationType = tipoIdentificacion;
+        datosToken.identificationNumber = numeroIdentificacion.trim();
       }
 
-      const token = await mp.createCardToken(datosTarjeta);
+      const token = await mp.fields.createCardToken(datosToken);
 
       const respuesta = await fetch("/api/suscripcion/crear", {
         method: "POST",
@@ -172,14 +190,12 @@ export function FormularioTarjeta({
           onChange={(e) => setCorreo(e.target.value)}
           required
         />
-        <Campo
-          etiqueta="Número de tarjeta"
-          inputMode="numeric"
-          autoComplete="cc-number"
-          value={numeroTarjeta}
-          onChange={(e) => setNumeroTarjeta(e.target.value)}
-          required
-        />
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-base font-medium text-texto">Número de tarjeta</label>
+          <div id="mp-numero-tarjeta" className={CLASE_CONTENEDOR_SEGURO} />
+        </div>
+
         <Campo
           etiqueta="Nombre del titular (como aparece en la tarjeta)"
           autoComplete="cc-name"
@@ -187,35 +203,18 @@ export function FormularioTarjeta({
           onChange={(e) => setNombreTitular(e.target.value)}
           required
         />
-        <div className="grid grid-cols-3 gap-2">
-          <Campo
-            etiqueta="Mes (MM)"
-            inputMode="numeric"
-            maxLength={2}
-            autoComplete="cc-exp-month"
-            value={mesVencimiento}
-            onChange={(e) => setMesVencimiento(e.target.value)}
-            required
-          />
-          <Campo
-            etiqueta="Año (AA)"
-            inputMode="numeric"
-            maxLength={4}
-            autoComplete="cc-exp-year"
-            value={anioVencimiento}
-            onChange={(e) => setAnioVencimiento(e.target.value)}
-            required
-          />
-          <Campo
-            etiqueta="CVV"
-            inputMode="numeric"
-            maxLength={4}
-            autoComplete="cc-csc"
-            value={cvv}
-            onChange={(e) => setCvv(e.target.value)}
-            required
-          />
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-base font-medium text-texto">Vencimiento (MM/AA)</label>
+            <div id="mp-vencimiento" className={CLASE_CONTENEDOR_SEGURO} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-base font-medium text-texto">CVV</label>
+            <div id="mp-cvv" className={CLASE_CONTENEDOR_SEGURO} />
+          </div>
         </div>
+
         <div className="grid grid-cols-2 gap-2">
           <Selector
             etiqueta="Identificación (opcional)"
