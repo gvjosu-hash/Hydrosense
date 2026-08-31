@@ -45,6 +45,7 @@ export function FormularioTarjeta({
   const [sdkListo, setSdkListo] = useState(false);
   const mpRef = useRef<ClienteMercadoPago | null>(null);
   const [tiposIdentificacion, setTiposIdentificacion] = useState<TipoIdentificacion[]>([]);
+  const [identificacionNoDisponible, setIdentificacionNoDisponible] = useState(false);
 
   const [correo, setCorreo] = useState(correoInicial);
   const [numeroTarjeta, setNumeroTarjeta] = useState("");
@@ -85,9 +86,12 @@ export function FormularioTarjeta({
         if (tipos[0]) setTipoIdentificacion(tipos[0].id);
       })
       .catch(() => {
-        // Si falla, se deja el campo de identificación sin opciones; el
-        // usuario puede seguir con los demás datos y se reintenta en submit.
+        setIdentificacionNoDisponible(true);
       });
+    // Si en unos segundos no llegó respuesta, se deja de mostrar "Cargando…"
+    // (es un campo opcional, no debe parecer trabado para siempre).
+    const limite = setTimeout(() => setIdentificacionNoDisponible(true), 6000);
+    return () => clearTimeout(limite);
   }, [sdkListo]);
 
   async function enviar(e: React.FormEvent) {
@@ -106,15 +110,26 @@ export function FormularioTarjeta({
 
     setEnviando(true);
     try {
-      const token = await mp.createCardToken({
+      // La tarjeta física trae el año en 2 dígitos (ej. "33"); Mercado Pago
+      // necesita el año completo (2033), si no la tokenización falla.
+      const anioLimpio = anioVencimiento.trim();
+      const anioCompleto = anioLimpio.length === 2 ? `20${anioLimpio}` : anioLimpio;
+
+      const datosTarjeta: Record<string, string> = {
         cardNumber: numeroTarjeta.replace(/\s+/g, ""),
         cardholderName: nombreTitular.trim(),
         cardExpirationMonth: mesVencimiento.trim(),
-        cardExpirationYear: anioVencimiento.trim(),
+        cardExpirationYear: anioCompleto,
         securityCode: cvv.trim(),
-        identificationType: tipoIdentificacion,
-        identificationNumber: numeroIdentificacion.trim(),
-      });
+      };
+      // Si el tipo de identificación no cargó, se manda el token sin esos
+      // campos en vez de mandarlos vacíos (que Mercado Pago sí rechaza).
+      if (tipoIdentificacion && numeroIdentificacion.trim()) {
+        datosTarjeta.identificationType = tipoIdentificacion;
+        datosTarjeta.identificationNumber = numeroIdentificacion.trim();
+      }
+
+      const token = await mp.createCardToken(datosTarjeta);
 
       const respuesta = await fetch("/api/suscripcion/crear", {
         method: "POST",
@@ -183,7 +198,7 @@ export function FormularioTarjeta({
             required
           />
           <Campo
-            etiqueta="Año (AAAA)"
+            etiqueta="Año (AA)"
             inputMode="numeric"
             maxLength={4}
             autoComplete="cc-exp-year"
@@ -203,11 +218,13 @@ export function FormularioTarjeta({
         </div>
         <div className="grid grid-cols-2 gap-2">
           <Selector
-            etiqueta="Identificación"
+            etiqueta="Identificación (opcional)"
             value={tipoIdentificacion}
             onChange={(e) => setTipoIdentificacion(e.target.value)}
           >
-            {tiposIdentificacion.length === 0 && <option value="">Cargando…</option>}
+            {tiposIdentificacion.length === 0 && (
+              <option value="">{identificacionNoDisponible ? "No disponible" : "Cargando…"}</option>
+            )}
             {tiposIdentificacion.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
@@ -215,10 +232,9 @@ export function FormularioTarjeta({
             ))}
           </Selector>
           <Campo
-            etiqueta="Número"
+            etiqueta="Número (opcional)"
             value={numeroIdentificacion}
             onChange={(e) => setNumeroIdentificacion(e.target.value)}
-            required
           />
         </div>
 
