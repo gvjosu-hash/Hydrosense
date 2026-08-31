@@ -26,6 +26,7 @@ export default function PaginaPOS() {
   const [productoGranelActivo, setProductoGranelActivo] = useState<ProductoBusqueda | null>(null);
   const [cantidadGranelInicial, setCantidadGranelInicial] = useState<string | undefined>();
   const [modalCobroAbierto, setModalCobroAbierto] = useState(false);
+  const [localId, setLocalId] = useState<string | null>(null);
   const [cobrando, setCobrando] = useState(false);
   const [errorCobro, setErrorCobro] = useState("");
   const [ventaExitosa, setVentaExitosa] = useState<VentaConfirmada | null>(null);
@@ -128,6 +129,7 @@ export default function PaginaPOS() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: carrito.map((i) => ({ productoId: i.productoId, cantidad: i.cantidad })),
+          localId: localId ?? undefined,
           ...resultado,
         }),
       });
@@ -218,7 +220,14 @@ export default function PaginaPOS() {
       {carrito.length > 0 && (
         <div className="fixed bottom-16 md:bottom-0 inset-x-0 bg-superficie border-t border-borde p-4 flex items-center justify-between gap-4 md:static md:border-0 md:bg-transparent md:p-0">
           <p className="text-2xl font-bold">${total.toFixed(2)}</p>
-          <Boton tamano="grande" className="flex-1 md:flex-none md:px-12" onClick={() => setModalCobroAbierto(true)}>
+          <Boton
+            tamano="grande"
+            className="flex-1 md:flex-none md:px-12"
+            onClick={() => {
+              setLocalId(crypto.randomUUID());
+              setModalCobroAbierto(true);
+            }}
+          >
             Cobrar
           </Boton>
         </div>

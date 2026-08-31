@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requerirSesion } from "@/lib/tenant";
+import { requerirAcceso } from "@/lib/tenant";
 import { respuestaError } from "@/lib/api-utils";
 import { leerArchivoProductos, MAX_FILAS_IMPORTACION } from "@/lib/importar-productos";
 
 export async function POST(request: Request) {
   try {
-    const sesion = await requerirSesion();
+    const sesion = await requerirAcceso();
     const formData = await request.formData();
     const archivo = formData.get("archivo");
 

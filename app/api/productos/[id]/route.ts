@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requerirSesion } from "@/lib/tenant";
+import { requerirAcceso } from "@/lib/tenant";
 import { respuestaError } from "@/lib/api-utils";
 import { esquemaProducto } from "@/lib/validaciones/producto";
 
@@ -9,7 +9,10 @@ const esquemaEdicionRapida = z
   .object({
     activo: z.boolean().optional(),
     precio: z.coerce.number().min(0, "El precio no puede ser negativo").optional(),
-    costo: z.coerce.number().min(0, "El costo no puede ser negativo").optional(),
+    costo: z.preprocess(
+      (valor) => (valor === "" ? undefined : valor),
+      z.coerce.number().min(0, "El costo no puede ser negativo").optional()
+    ),
     categoria: z.string().trim().optional(),
     fechaCaducidad: z.string().trim().optional(),
     stockActual: z.coerce.number().min(0, "El stock no puede ser negativo").optional(),
@@ -35,7 +38,7 @@ async function buscarProductoDeLaTienda(id: string, tiendaId: string) {
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const sesion = await requerirSesion();
+    const sesion = await requerirAcceso();
     const { id } = await params;
     await buscarProductoDeLaTienda(id, sesion.tiendaId);
 
@@ -79,7 +82,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const sesion = await requerirSesion();
+    const sesion = await requerirAcceso();
     const { id } = await params;
     await buscarProductoDeLaTienda(id, sesion.tiendaId);
 

@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requerirSesion } from "@/lib/tenant";
+import { requerirAcceso } from "@/lib/tenant";
 import { respuestaError } from "@/lib/api-utils";
 import { esquemaAbono } from "@/lib/validaciones/cliente";
 import { calcularSaldoCliente } from "@/lib/fiado";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const sesion = await requerirSesion();
+    const sesion = await requerirAcceso();
     const { id } = await params;
 
     const cliente = await prisma.cliente.findFirst({ where: { id, tiendaId: sesion.tiendaId } });

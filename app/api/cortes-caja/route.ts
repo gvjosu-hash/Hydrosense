@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requerirSesion } from "@/lib/tenant";
+import { requerirAcceso } from "@/lib/tenant";
 import { respuestaError } from "@/lib/api-utils";
 import { calcularResumenPendiente } from "@/lib/cortes-caja";
 
 export async function GET(request: Request) {
   try {
-    const sesion = await requerirSesion();
+    const sesion = await requerirAcceso();
     const { searchParams } = new URL(request.url);
     const desde = searchParams.get("desde");
     const hasta = searchParams.get("hasta");
@@ -40,7 +40,7 @@ const esquemaCorte = z.object({
 
 export async function POST(request: Request) {
   try {
-    const sesion = await requerirSesion();
+    const sesion = await requerirAcceso();
     const cuerpo = await request.json();
     const datos = esquemaCorte.parse(cuerpo);
 

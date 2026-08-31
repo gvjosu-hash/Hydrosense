@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requerirSesion } from "@/lib/tenant";
+import { requerirAcceso } from "@/lib/tenant";
 import { respuestaError } from "@/lib/api-utils";
 import { esquemaVenta } from "@/lib/validaciones/venta";
 import { generarExcel } from "@/lib/exportar-excel";
@@ -16,7 +16,7 @@ const ETIQUETA_METODO: Record<string, string> = {
 
 export async function GET(request: Request) {
   try {
-    const sesion = await requerirSesion();
+    const sesion = await requerirAcceso();
     const { searchParams } = new URL(request.url);
     const desde = searchParams.get("desde");
     const hasta = searchParams.get("hasta");
@@ -101,7 +101,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const sesion = await requerirSesion();
+    const sesion = await requerirAcceso();
     const cuerpo = await request.json();
     const datos = esquemaVenta.parse(cuerpo);
 
@@ -164,41 +164,63 @@ export async function POST(request: Request) {
       }
     }
 
-    const venta = await prisma.$transaction(async (tx) => {
-      const venta = await tx.venta.create({
-        data: {
-          tiendaId: sesion.tiendaId,
-          usuarioId: sesion.usuarioId,
-          total,
-          metodoPago: datos.metodoPago,
-          montoRecibido: montoRecibido ?? undefined,
-          cambio: cambio ?? undefined,
-          tipoTarjeta: datos.metodoPago === "TARJETA" ? datos.tipoTarjeta : undefined,
-          numeroAutorizacion:
-            datos.metodoPago === "TARJETA" ? datos.numeroAutorizacion : undefined,
-          clienteId: datos.metodoPago === "FIADO" ? datos.clienteId : undefined,
-          localId: datos.localId,
-          items: {
-            create: itemsCalculados.map(({ producto, cantidad, importe }) => ({
-              productoId: producto.id,
-              cantidad,
-              precioUnitario: producto.precio,
-              importe,
-            })),
+    let venta;
+    try {
+      venta = await prisma.$transaction(async (tx) => {
+        const venta = await tx.venta.create({
+          data: {
+            tiendaId: sesion.tiendaId,
+            usuarioId: sesion.usuarioId,
+            total,
+            metodoPago: datos.metodoPago,
+            montoRecibido: montoRecibido ?? undefined,
+            cambio: cambio ?? undefined,
+            tipoTarjeta: datos.metodoPago === "TARJETA" ? datos.tipoTarjeta : undefined,
+            numeroAutorizacion:
+              datos.metodoPago === "TARJETA" ? datos.numeroAutorizacion : undefined,
+            clienteId: datos.metodoPago === "FIADO" ? datos.clienteId : undefined,
+            localId: datos.localId,
+            items: {
+              create: itemsCalculados.map(({ producto, cantidad, importe }) => ({
+                productoId: producto.id,
+                cantidad,
+                precioUnitario: producto.precio,
+                importe,
+              })),
+            },
           },
-        },
-        include: { items: { include: { producto: true } }, cliente: true, tienda: true },
-      });
-
-      for (const { producto, cantidad } of itemsCalculados) {
-        await tx.producto.update({
-          where: { id: producto.id },
-          data: { stockActual: { decrement: cantidad } },
+          include: { items: { include: { producto: true } }, cliente: true, tienda: true },
         });
-      }
 
-      return venta;
-    });
+        for (const { producto, cantidad } of itemsCalculados) {
+          await tx.producto.update({
+            where: { id: producto.id },
+            data: { stockActual: { decrement: cantidad } },
+          });
+        }
+
+        return venta;
+      });
+    } catch (error) {
+      // Dos solicitudes con el mismo localId (doble tap, reintento de red)
+      // pueden llegar al mismo tiempo: ambas pasan el chequeo de arriba antes
+      // de que exista la fila, y la segunda choca con la restricción única.
+      // En ese caso no es un error real: se devuelve la venta que sí se creó.
+      if (
+        datos.localId &&
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        const existente = await prisma.venta.findUnique({
+          where: { tiendaId_localId: { tiendaId: sesion.tiendaId, localId: datos.localId } },
+          include: { items: { include: { producto: true } }, cliente: true, tienda: true },
+        });
+        if (existente) {
+          return NextResponse.json({ venta: existente });
+        }
+      }
+      throw error;
+    }
 
     return NextResponse.json({ venta }, { status: 201 });
   } catch (error) {

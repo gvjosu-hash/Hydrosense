@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requerirSesion } from "@/lib/tenant";
+import { requerirAcceso } from "@/lib/tenant";
 import { respuestaError } from "@/lib/api-utils";
 import { generarExcel } from "@/lib/exportar-excel";
 import { generarTablaPdf } from "@/lib/exportar-pdf-tabla";
@@ -16,7 +16,7 @@ const ETIQUETA_UNIDAD: Record<string, string> = {
 
 export async function GET(request: Request) {
   try {
-    const sesion = await requerirSesion();
+    const sesion = await requerirAcceso();
     const { searchParams } = new URL(request.url);
     const formato = searchParams.get("formato");
     if (formato !== "xlsx" && formato !== "pdf") {

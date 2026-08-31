@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requerirSesion } from "@/lib/tenant";
+import { requerirAcceso } from "@/lib/tenant";
 import { respuestaError } from "@/lib/api-utils";
 import { esquemaMerma } from "@/lib/validaciones/merma";
 import { generarExcel } from "@/lib/exportar-excel";
@@ -25,7 +25,7 @@ const ETIQUETA_MOTIVO: Record<string, string> = {
 
 export async function GET(request: Request) {
   try {
-    const sesion = await requerirSesion();
+    const sesion = await requerirAcceso();
     const { searchParams } = new URL(request.url);
     const desde = searchParams.get("desde");
     const hasta = searchParams.get("hasta");
@@ -138,7 +138,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const sesion = await requerirSesion();
+    const sesion = await requerirAcceso();
     const cuerpo = await request.json();
     const datos = esquemaMerma.parse(cuerpo);
 

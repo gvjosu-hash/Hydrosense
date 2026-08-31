@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { requerirSesion } from "@/lib/tenant";
+import { requerirAcceso } from "@/lib/tenant";
 import { respuestaError } from "@/lib/api-utils";
 import { generarExcel } from "@/lib/exportar-excel";
 import { encabezadoDescarga, nombreArchivoExportacion } from "@/lib/nombre-exportacion";
 
 export async function GET() {
   try {
-    await requerirSesion();
+    await requerirAcceso();
 
     const buffer = await generarExcel([
       {
