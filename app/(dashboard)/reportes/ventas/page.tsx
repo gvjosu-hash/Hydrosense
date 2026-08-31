@@ -6,6 +6,7 @@ import { Tarjeta } from "@/components/ui/card";
 import { Insignia } from "@/components/ui/badge";
 import { EstadoVacio } from "@/components/ui/estado-vacio";
 import { RangoFechas } from "@/components/reportes/rango-fechas";
+import { BotonesExportar } from "@/components/reportes/botones-exportar";
 
 interface Venta {
   id: string;
@@ -80,6 +81,11 @@ export default function PaginaRegistroVentas() {
       </div>
 
       <RangoFechas desde={desde} hasta={hasta} onCambiarDesde={setDesde} onCambiarHasta={setHasta} />
+
+      <BotonesExportar
+        endpoint="/api/ventas"
+        params={{ desde: new Date(desde).toISOString(), hasta: `${hasta}T23:59:59.999Z` }}
+      />
 
       {!cargando && ventas.length === 0 && (
         <EstadoVacio titulo="No hay ventas en este rango" descripcion="Ajusta las fechas para ver más." />

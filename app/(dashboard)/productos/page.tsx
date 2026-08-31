@@ -13,6 +13,7 @@ import {
   DatosFormularioProducto,
 } from "@/components/productos/formulario-producto";
 import { FilaEdicionRapida } from "@/components/productos/fila-edicion-rapida";
+import { ModalImportarProductos } from "@/components/productos/modal-importar";
 
 interface Producto {
   id: string;
@@ -51,6 +52,7 @@ export default function PaginaProductos() {
   const [errorFormulario, setErrorFormulario] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [edicionRapidaId, setEdicionRapidaId] = useState<string | null>(null);
+  const [modalImportarAbierto, setModalImportarAbierto] = useState(false);
 
   const cargarProductos = useCallback(async (texto: string) => {
     setCargando(true);
@@ -117,7 +119,12 @@ export default function PaginaProductos() {
     <div className="p-4 sm:p-6 max-w-3xl mx-auto flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Productos</h1>
-        <Boton onClick={abrirCrear}>+ Agregar</Boton>
+        <div className="flex gap-2">
+          <Boton variante="secundario" onClick={() => setModalImportarAbierto(true)}>
+            Importar
+          </Boton>
+          <Boton onClick={abrirCrear}>+ Agregar</Boton>
+        </div>
       </div>
 
       <Campo
@@ -235,6 +242,13 @@ export default function PaginaProductos() {
             error={errorFormulario}
           />
         </Modal>
+      )}
+
+      {modalImportarAbierto && (
+        <ModalImportarProductos
+          onCerrar={() => setModalImportarAbierto(false)}
+          onImportado={() => cargarProductos(busqueda)}
+        />
       )}
     </div>
   );

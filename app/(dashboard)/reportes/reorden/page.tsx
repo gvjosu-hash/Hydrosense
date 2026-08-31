@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Tarjeta } from "@/components/ui/card";
 import { Insignia } from "@/components/ui/badge";
 import { EstadoVacio } from "@/components/ui/estado-vacio";
+import { BotonesExportar } from "@/components/reportes/botones-exportar";
 
 interface Producto {
   id: string;
@@ -61,6 +62,8 @@ export default function PaginaReorden() {
         Productos en o por debajo del mínimo que definiste en Productos (&quot;Alertar cuando baje
         de&quot;).
       </p>
+
+      <BotonesExportar endpoint="/api/reportes/reorden/exportar" />
 
       {!cargando && paraReordenar.length === 0 && (
         <EstadoVacio

@@ -6,6 +6,7 @@ import { Campo } from "@/components/ui/input";
 import { Tarjeta } from "@/components/ui/card";
 import { Insignia } from "@/components/ui/badge";
 import { EstadoVacio } from "@/components/ui/estado-vacio";
+import { BotonesExportar } from "@/components/reportes/botones-exportar";
 
 interface Producto {
   id: string;
@@ -74,6 +75,8 @@ export default function PaginaReporteExistencias() {
         value={busqueda}
         onChange={(e) => setBusqueda(e.target.value)}
       />
+
+      <BotonesExportar endpoint="/api/reportes/existencias/exportar" />
 
       {!cargando && filtrados.length === 0 && (
         <EstadoVacio titulo="No hay productos que mostrar" descripcion="Ajusta la búsqueda." />

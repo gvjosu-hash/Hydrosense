@@ -3,6 +3,9 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requerirSesion } from "@/lib/tenant";
 import { respuestaError } from "@/lib/api-utils";
+import { generarExcel } from "@/lib/exportar-excel";
+import { generarTablaPdf } from "@/lib/exportar-pdf-tabla";
+import { encabezadoDescarga, nombreArchivoExportacion } from "@/lib/nombre-exportacion";
 
 interface Acumulado {
   nombre: string;
@@ -87,10 +90,67 @@ export async function GET(request: Request) {
         .sort((a, b) => b.ingreso - a.ingreso);
     }
 
-    return NextResponse.json({
-      productos: formatear(porProducto),
-      categorias: formatear(porCategoria),
-    });
+    const productos = formatear(porProducto);
+    const categorias = formatear(porCategoria);
+
+    const formato = searchParams.get("formato");
+    if (formato === "xlsx" || formato === "pdf") {
+      const agrupar = searchParams.get("agrupar") === "categoria";
+      const datos = agrupar ? categorias : productos;
+      const nombreColumna = agrupar ? "Categoría" : "Producto";
+      const filas = datos.map((d) => ({
+        nombre: d.nombre,
+        cantidad: String(d.cantidad),
+        ingreso: `$${d.ingreso.toFixed(2)}`,
+        costo: d.costoDesconocido ? "Parcial" : `$${d.costoTotal.toFixed(2)}`,
+        utilidad: `$${d.utilidad.toFixed(2)}`,
+      }));
+      const nombreArchivo = nombreArchivoExportacion("Utilidad bruta", formato);
+      const subtitulo = `Del ${desde.toISOString().slice(0, 10)} al ${hasta.toISOString().slice(0, 10)}`;
+
+      if (formato === "xlsx") {
+        const buffer = await generarExcel([
+          {
+            nombre: "Utilidad bruta",
+            columnas: [
+              { encabezado: nombreColumna, clave: "nombre", ancho: 30 },
+              { encabezado: "Cantidad", clave: "cantidad", ancho: 12 },
+              { encabezado: "Ingreso", clave: "ingreso", ancho: 14 },
+              { encabezado: "Costo", clave: "costo", ancho: 14 },
+              { encabezado: "Utilidad", clave: "utilidad", ancho: 14 },
+            ],
+            filas,
+          },
+        ]);
+        return new NextResponse(new Uint8Array(buffer), {
+          headers: {
+            "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "Content-Disposition": encabezadoDescarga(nombreArchivo),
+          },
+        });
+      }
+
+      const bytes = await generarTablaPdf({
+        titulo: "Utilidad bruta",
+        subtitulo,
+        columnas: [
+          { encabezado: nombreColumna, clave: "nombre", ancho: 250 },
+          { encabezado: "Cantidad", clave: "cantidad", ancho: 100, alineacion: "derecha" },
+          { encabezado: "Ingreso", clave: "ingreso", ancho: 120, alineacion: "derecha" },
+          { encabezado: "Costo", clave: "costo", ancho: 120, alineacion: "derecha" },
+          { encabezado: "Utilidad", clave: "utilidad", ancho: 120, alineacion: "derecha" },
+        ],
+        filas,
+      });
+      return new NextResponse(new Uint8Array(bytes), {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": encabezadoDescarga(nombreArchivo),
+        },
+      });
+    }
+
+    return NextResponse.json({ productos, categorias });
   } catch (error) {
     return respuestaError(error);
   }

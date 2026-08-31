@@ -8,6 +8,7 @@ import { Insignia } from "@/components/ui/badge";
 import { EstadoVacio } from "@/components/ui/estado-vacio";
 import { useToast } from "@/components/ui/toast";
 import { ModalMerma } from "@/components/reportes/modal-merma";
+import { BotonesExportar } from "@/components/reportes/botones-exportar";
 
 interface Merma {
   id: string;
@@ -92,6 +93,8 @@ export default function PaginaMermas() {
         <h1 className="text-2xl font-bold">Mermas y caducidades</h1>
         <Boton onClick={() => setModalAbierto(true)}>+ Registrar merma</Boton>
       </div>
+
+      <BotonesExportar endpoint="/api/mermas" />
 
       <div>
         <h2 className="text-lg font-bold mb-2">Próximas a caducar</h2>

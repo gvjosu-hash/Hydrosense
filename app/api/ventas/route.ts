@@ -4,6 +4,15 @@ import { prisma } from "@/lib/db";
 import { requerirSesion } from "@/lib/tenant";
 import { respuestaError } from "@/lib/api-utils";
 import { esquemaVenta } from "@/lib/validaciones/venta";
+import { generarExcel } from "@/lib/exportar-excel";
+import { generarTablaPdf } from "@/lib/exportar-pdf-tabla";
+import { encabezadoDescarga, nombreArchivoExportacion } from "@/lib/nombre-exportacion";
+
+const ETIQUETA_METODO: Record<string, string> = {
+  EFECTIVO: "Efectivo",
+  TARJETA: "Tarjeta",
+  FIADO: "Fiado",
+};
 
 export async function GET(request: Request) {
   try {
@@ -11,6 +20,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const desde = searchParams.get("desde");
     const hasta = searchParams.get("hasta");
+    const formato = searchParams.get("formato");
 
     const ventas = await prisma.venta.findMany({
       where: {
@@ -27,6 +37,61 @@ export async function GET(request: Request) {
       include: { items: { include: { producto: true } }, usuario: true, cliente: true },
       orderBy: { fecha: "desc" },
     });
+
+    if (formato === "xlsx" || formato === "pdf") {
+      const filas = ventas.map((v) => ({
+        fecha: new Date(v.fecha).toLocaleString("es-MX", { dateStyle: "medium", timeStyle: "short" }),
+        productos: v.items.map((i) => i.producto.nombre).join(", "),
+        metodo: ETIQUETA_METODO[v.metodoPago] ?? v.metodoPago,
+        atendio: v.usuario.nombre,
+        cliente: v.cliente?.nombre ?? "",
+        total: `$${Number(v.total).toFixed(2)}`,
+      }));
+      const nombreArchivo = nombreArchivoExportacion("Registro de ventas", formato);
+
+      if (formato === "xlsx") {
+        const buffer = await generarExcel([
+          {
+            nombre: "Ventas",
+            columnas: [
+              { encabezado: "Fecha", clave: "fecha", ancho: 20 },
+              { encabezado: "Productos", clave: "productos", ancho: 40 },
+              { encabezado: "Método", clave: "metodo", ancho: 12 },
+              { encabezado: "Atendió", clave: "atendio", ancho: 18 },
+              { encabezado: "Cliente (fiado)", clave: "cliente", ancho: 18 },
+              { encabezado: "Total", clave: "total", ancho: 12 },
+            ],
+            filas,
+          },
+        ]);
+        return new NextResponse(new Uint8Array(buffer), {
+          headers: {
+            "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "Content-Disposition": encabezadoDescarga(nombreArchivo),
+          },
+        });
+      }
+
+      const bytes = await generarTablaPdf({
+        titulo: "Registro de ventas",
+        subtitulo: desde || hasta ? `Del ${desde?.slice(0, 10) ?? "…"} al ${hasta?.slice(0, 10) ?? "…"}` : undefined,
+        columnas: [
+          { encabezado: "Fecha", clave: "fecha", ancho: 130 },
+          { encabezado: "Productos", clave: "productos", ancho: 280 },
+          { encabezado: "Método", clave: "metodo", ancho: 70 },
+          { encabezado: "Atendió", clave: "atendio", ancho: 100 },
+          { encabezado: "Cliente", clave: "cliente", ancho: 100 },
+          { encabezado: "Total", clave: "total", ancho: 80, alineacion: "derecha" },
+        ],
+        filas,
+      });
+      return new NextResponse(Buffer.from(bytes), {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": encabezadoDescarga(nombreArchivo),
+        },
+      });
+    }
 
     return NextResponse.json({ ventas });
   } catch (error) {
