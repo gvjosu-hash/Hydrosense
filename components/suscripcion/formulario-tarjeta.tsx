@@ -1,5 +1,10 @@
 "use client";
 
+// NOTA: este componente no se usa actualmente en /suscripcion (ver
+// panel-suscripcion.tsx, que solo muestra la redirección al checkout de
+// Mercado Pago). La autorización directa con card_token_id generaba el
+// token bien pero Mercado Pago rechazaba la suscripción con CC_VAL_433 en
+// pruebas reales; se dejó el código por si se retoma más adelante.
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { Campo } from "@/components/ui/input";
