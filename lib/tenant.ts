@@ -55,6 +55,27 @@ export async function requerirAcceso(): Promise<SesionPayload> {
   return sesion;
 }
 
+export class ErrorNoAutorizado extends Error {
+  constructor() {
+    super("No tienes permiso para hacer esto");
+  }
+}
+
+/**
+ * Exige sesión + que el usuario sea el equipo de Xolo (acceso a /admin).
+ * Úsalo en cualquier ruta que solo el admin de la plataforma debe poder
+ * llamar (nunca el dueño de una tienda cualquiera).
+ */
+export async function requerirAdminPlataforma(): Promise<SesionPayload> {
+  const sesion = await requerirSesion();
+  const usuario = await prisma.usuario.findUnique({
+    where: { id: sesion.usuarioId },
+    select: { esAdminPlataforma: true },
+  });
+  if (!usuario?.esAdminPlataforma) throw new ErrorNoAutorizado();
+  return sesion;
+}
+
 export class ErrorLimiteProductos extends Error {}
 
 /**
