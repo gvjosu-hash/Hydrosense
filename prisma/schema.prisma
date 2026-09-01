@@ -59,6 +59,13 @@ enum EstadoSuscripcion {
   CANCELADA
 }
 
+// Ver lib/planes.ts para precio y límite de productos de cada uno.
+enum PlanSuscripcion {
+  BASICO
+  MEDIANO
+  COMPLETO
+}
+
 model Tienda {
   id        String   @id @default(cuid())
   nombre    String
@@ -252,6 +259,9 @@ model Suscripcion {
   tienda              Tienda            @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
   mpPreapprovalId      String?
   estado              EstadoSuscripcion @default(PRUEBA)
+  // Se guarda al suscribirse (ver /api/suscripcion/crear); mientras solo
+  // está en periodo de prueba, todavía no hay uno elegido.
+  plan                PlanSuscripcion?
   fechaInicioPrueba    DateTime          @default(now())
   fechaFinPrueba       DateTime?
   fechaProximoCobro    DateTime?

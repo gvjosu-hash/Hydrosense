@@ -81,9 +81,27 @@ export default async function PaginaAdmin() {
           </div>
         )}
         <p className="text-texto-suave text-sm pt-2 border-t border-borde mt-1">
-          Ingreso mensual recurrente estimado (tiendas activas × $110):{" "}
+          Ingreso mensual recurrente estimado (suma de tiendas activas por plan):{" "}
           <span className="font-bold text-texto">${resumen.ingresoMensualEstimado.toFixed(2)}</span>
         </p>
+      </Tarjeta>
+
+      <Tarjeta className="p-4 flex flex-col gap-2">
+        <h2 className="font-bold text-lg">Suscripciones activas por plan</h2>
+        {resumen.conteoPorPlan.length === 0 ? (
+          <p className="text-texto-suave text-sm">Todavía no hay suscripciones activas.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {resumen.conteoPorPlan.map((p) => (
+              <div key={p.plan} className="flex items-center justify-between">
+                <span>
+                  {p.nombre} <span className="text-texto-suave text-sm">(${p.precio}/mes)</span>
+                </span>
+                <span className="font-bold">{p.tiendas}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </Tarjeta>
 
       <Tarjeta className="p-4 flex flex-col gap-2 border-2 border-acento">

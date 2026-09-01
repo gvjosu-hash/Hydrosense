@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { COOKIE_SESION, verificarSesion, SesionPayload } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { calcularAcceso } from "@/lib/suscripcion";
+import { PLANES } from "@/lib/planes";
 
 /**
  * Lee y valida la sesión actual desde la cookie httpOnly. Toda ruta de API
@@ -52,4 +53,34 @@ export async function requerirAcceso(): Promise<SesionPayload> {
   const acceso = calcularAcceso(tienda, tienda.suscripcion);
   if (acceso.bloqueado) throw new ErrorSuscripcionBloqueada();
   return sesion;
+}
+
+export class ErrorLimiteProductos extends Error {}
+
+/**
+ * Revisa que agregar `cantidadNueva` productos no rebase el límite del plan
+ * contratado. Una tienda exenta o en periodo de prueba no tiene límite (se
+ * les deja usar todo mientras prueban o mientras son cuenta propia); el
+ * límite solo aplica con una suscripción ACTIVA, según el plan elegido.
+ */
+export async function verificarLimiteProductos(
+  tiendaId: string,
+  cantidadNueva: number
+): Promise<void> {
+  const tienda = await prisma.tienda.findUnique({
+    where: { id: tiendaId },
+    select: { exentaDePago: true, suscripcion: { select: { estado: true, plan: true } } },
+  });
+  if (!tienda || tienda.exentaDePago) return;
+  if (tienda.suscripcion?.estado !== "ACTIVA" || !tienda.suscripcion.plan) return;
+
+  const limite = PLANES[tienda.suscripcion.plan].limiteProductos;
+  if (limite === null) return;
+
+  const actuales = await prisma.producto.count({ where: { tiendaId, activo: true } });
+  if (actuales + cantidadNueva > limite) {
+    throw new ErrorLimiteProductos(
+      `Tu plan permite hasta ${limite} productos y ya tienes ${actuales}. Cambia de plan para agregar más.`
+    );
+  }
 }

@@ -1,8 +1,6 @@
 import { MercadoPagoConfig } from "mercadopago";
 
-// Cobro mensual único: Xolo no tiene planes ni niveles, todas las tiendas
-// pagan lo mismo.
-export const PRECIO_SUSCRIPCION_MXN = 110;
+// Precio y límite de productos de cada plan: ver lib/planes.ts.
 export const DIAS_PRUEBA_GRATIS = 15;
 
 export function obtenerClienteMercadoPago(): MercadoPagoConfig {

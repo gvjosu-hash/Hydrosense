@@ -3,7 +3,6 @@ import { prisma } from "@/lib/db";
 import { obtenerSesion } from "@/lib/tenant";
 import { calcularAcceso } from "@/lib/suscripcion";
 import { Xolo } from "@/components/mascota/xolo";
-import { PRECIO_SUSCRIPCION_MXN } from "@/lib/mercadopago";
 import { PanelSuscripcion } from "@/components/suscripcion/panel-suscripcion";
 
 export default async function PaginaSuscripcion() {
@@ -39,7 +38,7 @@ export default async function PaginaSuscripcion() {
         diasRestantesPrueba={acceso.diasRestantesPrueba}
         fechaProximoCobro={tienda.suscripcion?.fechaProximoCobro?.toISOString() ?? null}
         correoConocido={tienda.usuarios[0]?.correo ?? null}
-        precioMensual={PRECIO_SUSCRIPCION_MXN}
+        planActual={tienda.suscripcion?.plan ?? null}
       />
     </main>
   );

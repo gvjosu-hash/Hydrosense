@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requerirAcceso } from "@/lib/tenant";
+import { requerirAcceso, verificarLimiteProductos } from "@/lib/tenant";
 import { respuestaError } from "@/lib/api-utils";
 import { leerArchivoProductos, MAX_FILAS_IMPORTACION } from "@/lib/importar-productos";
 
@@ -47,6 +47,14 @@ export async function POST(request: Request) {
         })
       : [];
     const existentesPorCodigo = new Map(existentes.map((p) => [p.codigoBarras as string, p]));
+
+    // Solo las filas que no van a actualizar un producto existente suman al
+    // límite del plan (las que sí tienen código de barras ya registrado son
+    // una actualización, no un producto nuevo).
+    const filasNuevas = validas.filter(
+      (f) => !(f.datos.codigoBarras && existentesPorCodigo.has(f.datos.codigoBarras))
+    ).length;
+    await verificarLimiteProductos(sesion.tiendaId, filasNuevas);
 
     let creados = 0;
     let actualizados = 0;

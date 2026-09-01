@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { PRECIO_SUSCRIPCION_MXN } from "@/lib/mercadopago";
+import { PLANES } from "@/lib/planes";
 
 export interface PeriodoAcumulado {
   desde: Date;
@@ -26,6 +26,7 @@ export function periodoAcumuladoActual(ahora: Date = new Date()): PeriodoAcumula
 
 export interface ResumenAdmin {
   conteoPorEstado: { estado: string; tiendas: number }[];
+  conteoPorPlan: { plan: string; nombre: string; precio: number; tiendas: number }[];
   tiendasExentas: number;
   totalTiendas: number;
   ingresoMensualEstimado: number;
@@ -40,7 +41,7 @@ export async function obtenerResumenAdmin(): Promise<ResumenAdmin> {
 
   const [tiendas, agregadoPeriodo, ultimosPagos] = await Promise.all([
     prisma.tienda.findMany({
-      select: { exentaDePago: true, suscripcion: { select: { estado: true } } },
+      select: { exentaDePago: true, suscripcion: { select: { estado: true, plan: true } } },
     }),
     prisma.pago.aggregate({
       where: { fecha: { gte: periodo.desde, lte: periodo.hasta } },
@@ -55,7 +56,9 @@ export async function obtenerResumenAdmin(): Promise<ResumenAdmin> {
   ]);
 
   const conteo = new Map<string, number>();
+  const conteoPlan = new Map<string, number>();
   let tiendasExentas = 0;
+  let ingresoMensualEstimado = 0;
   for (const tienda of tiendas) {
     if (tienda.exentaDePago) {
       tiendasExentas += 1;
@@ -63,15 +66,24 @@ export async function obtenerResumenAdmin(): Promise<ResumenAdmin> {
     }
     const estado = tienda.suscripcion?.estado ?? "SIN_SUSCRIPCION";
     conteo.set(estado, (conteo.get(estado) ?? 0) + 1);
+    if (estado === "ACTIVA" && tienda.suscripcion?.plan) {
+      const plan = tienda.suscripcion.plan;
+      conteoPlan.set(plan, (conteoPlan.get(plan) ?? 0) + 1);
+      ingresoMensualEstimado += PLANES[plan].precio;
+    }
   }
-
-  const numeroActivas = conteo.get("ACTIVA") ?? 0;
 
   return {
     conteoPorEstado: Array.from(conteo.entries()).map(([estado, tiendas]) => ({ estado, tiendas })),
+    conteoPorPlan: Array.from(conteoPlan.entries()).map(([plan, tiendas]) => ({
+      plan,
+      nombre: PLANES[plan as keyof typeof PLANES].nombre,
+      precio: PLANES[plan as keyof typeof PLANES].precio,
+      tiendas,
+    })),
     tiendasExentas,
     totalTiendas: tiendas.length,
-    ingresoMensualEstimado: numeroActivas * PRECIO_SUSCRIPCION_MXN,
+    ingresoMensualEstimado,
     periodo,
     acumuladoPeriodo: (agregadoPeriodo._sum.monto as Prisma.Decimal | null)?.toNumber() ?? 0,
     numeroPagosPeriodo: agregadoPeriodo._count,

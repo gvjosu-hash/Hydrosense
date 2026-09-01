@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requerirAcceso } from "@/lib/tenant";
+import { requerirAcceso, verificarLimiteProductos } from "@/lib/tenant";
 import { respuestaError } from "@/lib/api-utils";
 import { esquemaProducto } from "@/lib/validaciones/producto";
 
@@ -84,10 +84,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   try {
     const sesion = await requerirAcceso();
     const { id } = await params;
-    await buscarProductoDeLaTienda(id, sesion.tiendaId);
+    const productoActual = await buscarProductoDeLaTienda(id, sesion.tiendaId);
 
     const cuerpo = await request.json();
     const datos = esquemaEdicionRapida.parse(cuerpo);
+    if (datos.activo === true && !productoActual.activo) {
+      await verificarLimiteProductos(sesion.tiendaId, 1);
+    }
 
     const producto = await prisma.producto.update({
       where: { id },

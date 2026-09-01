@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requerirAcceso } from "@/lib/tenant";
+import { requerirAcceso, verificarLimiteProductos } from "@/lib/tenant";
 import { respuestaError } from "@/lib/api-utils";
 import { esquemaProducto } from "@/lib/validaciones/producto";
 
@@ -38,6 +38,7 @@ export async function POST(request: Request) {
     const sesion = await requerirAcceso();
     const cuerpo = await request.json();
     const datos = esquemaProducto.parse(cuerpo);
+    await verificarLimiteProductos(sesion.tiendaId, 1);
 
     const codigoBarras = datos.codigoBarras || null;
     if (codigoBarras) {
