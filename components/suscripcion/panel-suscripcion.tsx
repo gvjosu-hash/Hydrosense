@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Tarjeta } from "@/components/ui/card";
 import { Boton } from "@/components/ui/button";
 import { Campo } from "@/components/ui/input";
-import { FormularioPagoBrick } from "@/components/suscripcion/formulario-pago-brick";
 
 type Estado = "PRUEBA" | "ACTIVA" | "PAGO_FALLIDO" | "CANCELADA" | null;
 
@@ -33,14 +32,8 @@ export function PanelSuscripcion({
   const [cargando, setCargando] = useState(false);
   const [cancelando, setCancelando] = useState(false);
   const [error, setError] = useState("");
-  const [usarRedireccion, setUsarRedireccion] = useState(false);
 
   const enPrueba = estado === "PRUEBA" && diasRestantesPrueba !== null;
-  const correoListo = correoConocido ?? correo.trim();
-
-  function alAutorizarTarjeta() {
-    router.refresh();
-  }
 
   async function suscribirse() {
     setError("");
@@ -156,37 +149,9 @@ export function PanelSuscripcion({
 
           {error && <p className="text-peligro font-medium text-center">{error}</p>}
 
-          {usarRedireccion ? (
-            <>
-              <Boton tamano="grande" disabled={cargando} onClick={suscribirse}>
-                {cargando ? "Redirigiendo..." : "Suscribirme con Mercado Pago"}
-              </Boton>
-              <button
-                onClick={() => setUsarRedireccion(false)}
-                className="text-texto-suave hover:text-acento-fuerte font-medium text-sm cursor-pointer text-center"
-              >
-                Pagar con tarjeta aquí mismo
-              </button>
-            </>
-          ) : correoConocido || correo.trim() ? (
-            <>
-              <FormularioPagoBrick
-                correo={correoListo}
-                monto={precioMensual}
-                onExito={alAutorizarTarjeta}
-              />
-              <button
-                onClick={() => setUsarRedireccion(true)}
-                className="text-texto-suave hover:text-acento-fuerte font-medium text-sm cursor-pointer text-center"
-              >
-                Prefiero pagar en el checkout de Mercado Pago
-              </button>
-            </>
-          ) : (
-            <p className="text-texto-suave text-center text-sm">
-              Escribe tu correo para continuar
-            </p>
-          )}
+          <Boton tamano="grande" disabled={cargando} onClick={suscribirse}>
+            {cargando ? "Redirigiendo..." : "Suscribirme con Mercado Pago"}
+          </Boton>
         </>
       )}
 
