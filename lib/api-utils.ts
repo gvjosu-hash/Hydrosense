@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { Prisma } from "@prisma/client";
-import { ErrorNoAutenticado, ErrorNoAutorizado, ErrorSuscripcionBloqueada } from "@/lib/tenant";
+import { ErrorNoAutenticado, ErrorSuscripcionBloqueada } from "@/lib/tenant";
 
 export function respuestaError(error: unknown) {
   if (error instanceof ErrorNoAutenticado) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });
-  }
-  if (error instanceof ErrorNoAutorizado) {
-    return NextResponse.json({ error: error.message }, { status: 403 });
   }
   if (error instanceof ErrorSuscripcionBloqueada) {
     return NextResponse.json({ error: error.message }, { status: 402 });

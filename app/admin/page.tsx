@@ -5,7 +5,6 @@ import { obtenerResumenAdmin } from "@/lib/admin-suscripciones";
 import { Xolo } from "@/components/mascota/xolo";
 import { Tarjeta } from "@/components/ui/card";
 import { Insignia } from "@/components/ui/badge";
-import { ActivarSuscripcion } from "@/components/admin/activar-suscripcion";
 
 const ETIQUETA_ESTADO: Record<string, string> = {
   ACTIVA: "Activa (pagando)",
@@ -103,11 +102,6 @@ export default async function PaginaAdmin() {
             ))}
           </div>
         )}
-      </Tarjeta>
-
-      <Tarjeta className="p-4 flex flex-col gap-2">
-        <h2 className="font-bold text-lg">Activar suscripción manualmente</h2>
-        <ActivarSuscripcion />
       </Tarjeta>
 
       <Tarjeta className="p-4 flex flex-col gap-2 border-2 border-acento">
