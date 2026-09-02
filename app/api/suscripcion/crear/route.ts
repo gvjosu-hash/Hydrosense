@@ -62,11 +62,12 @@ export async function POST(request: Request) {
       body: {
         reason: `Xolo - ${plan.nombre}`,
         external_reference: tienda.id,
-        // Sin payer_email a propósito: si lo mandamos, Mercado Pago exige
-        // que quien complete el pago esté loggeado exactamente con ese
-        // correo, y el dueño de la tienda casi nunca paga con la misma
-        // cuenta de Mercado Pago que usa para todo lo demás. correo solo
-        // se guarda para nuestros propios registros (arriba).
+        // payer_email es obligatorio para Mercado Pago (aunque el SDK lo
+        // marque como opcional en sus tipos, la API lo rechaza sin él).
+        // OJO: quien pague debe estar loggeado en Mercado Pago con este
+        // mismo correo exacto, o el checkout lo rechaza — avisar bien de
+        // esto en la pantalla de suscripción.
+        payer_email: correo,
         back_url: `${origen}/suscripcion`,
         auto_recurring: {
           // 30 días fijos, no "1 mes": así el cobro no se recorre según el
