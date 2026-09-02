@@ -57,6 +57,11 @@ export async function POST(request: Request) {
         ? fechaFinPrueba
         : new Date(Date.now() + MARGEN_INICIO_COBRO_MS);
 
+    // Con cardTokenId (Payment Brick embebido en Xolo) la tarjeta ya se
+    // tokenizó en el navegador: se puede autorizar la suscripción directo,
+    // sin mandar al usuario al checkout de Mercado Pago (back_url).
+    const usaFormularioEmbebido = !!datos.cardTokenId;
+
     const cliente = obtenerClienteMercadoPago();
     const preapproval = await new PreApproval(cliente).create({
       body: {
@@ -64,11 +69,16 @@ export async function POST(request: Request) {
         external_reference: tienda.id,
         // payer_email es obligatorio para Mercado Pago (aunque el SDK lo
         // marque como opcional en sus tipos, la API lo rechaza sin él).
-        // OJO: quien pague debe estar loggeado en Mercado Pago con este
-        // mismo correo exacto, o el checkout lo rechaza — avisar bien de
-        // esto en la pantalla de suscripción.
+        // OJO: en el flujo de redirección, quien pague debe estar loggeado
+        // en Mercado Pago con este mismo correo exacto, o el checkout lo
+        // rechaza.
         payer_email: correo,
+        // Mercado Pago exige back_url siempre, aunque la tarjeta ya venga
+        // tokenizada y no haya redirección real.
         back_url: `${origen}/suscripcion`,
+        ...(usaFormularioEmbebido
+          ? { card_token_id: datos.cardTokenId, status: "authorized" }
+          : {}),
         auto_recurring: {
           // 30 días fijos, no "1 mes": así el cobro no se recorre según el
           // mes tenga 28, 30 o 31 días.
@@ -81,21 +91,45 @@ export async function POST(request: Request) {
       },
     });
 
-    if (!preapproval.id || !preapproval.init_point) {
+    if (!preapproval.id || (!usaFormularioEmbebido && !preapproval.init_point)) {
       throw new Error("Mercado Pago no devolvió los datos esperados de la suscripción");
+    }
+    if (usaFormularioEmbebido && preapproval.status !== "authorized") {
+      return NextResponse.json(
+        { error: "No se pudo autorizar la tarjeta. Verifica los datos e intenta de nuevo." },
+        { status: 400 }
+      );
     }
 
     await prisma.suscripcion.upsert({
       where: { tiendaId: tienda.id },
-      update: { mpPreapprovalId: preapproval.id, plan: plan.id },
-      create: {
-        tiendaId: tienda.id,
-        estado: "PRUEBA",
+      update: {
         mpPreapprovalId: preapproval.id,
         plan: plan.id,
+        ...(usaFormularioEmbebido
+          ? {
+              estado: "ACTIVA",
+              fechaProximoCobro: preapproval.next_payment_date
+                ? new Date(preapproval.next_payment_date)
+                : undefined,
+            }
+          : {}),
+      },
+      create: {
+        tiendaId: tienda.id,
+        estado: usaFormularioEmbebido ? "ACTIVA" : "PRUEBA",
+        mpPreapprovalId: preapproval.id,
+        plan: plan.id,
+        fechaProximoCobro:
+          usaFormularioEmbebido && preapproval.next_payment_date
+            ? new Date(preapproval.next_payment_date)
+            : undefined,
       },
     });
 
+    if (usaFormularioEmbebido) {
+      return NextResponse.json({ ok: true });
+    }
     return NextResponse.json({ initPoint: preapproval.init_point });
   } catch (error) {
     return respuestaError(error);
