@@ -21,6 +21,11 @@ const CUENTAS = [
     nombreTienda: "Tienda Prueba Vencida 2",
     nombreUsuario: "Prueba Vencida 2",
   },
+  {
+    correo: "luis.aldair.ini@gmail.com",
+    nombreTienda: "Tienda Prueba Vencida 3",
+    nombreUsuario: "Prueba Vencida 3",
+  },
 ];
 
 async function crearCuenta(client, cuenta) {
