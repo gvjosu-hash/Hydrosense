@@ -282,6 +282,10 @@ model Pago {
   tienda      Tienda   @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
   mpPaymentId String   @unique
   monto       Decimal  @db.Decimal(10, 2)
+  // Lo que Mercado Pago acredita después de su comisión
+  // (transaction_details.net_received_amount). Nula si no vino en la
+  // respuesta del webhook.
+  montoNeto   Decimal? @db.Decimal(10, 2)
   fecha       DateTime
   createdAt   DateTime @default(now())
 

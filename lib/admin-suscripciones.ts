@@ -32,8 +32,17 @@ export interface ResumenAdmin {
   ingresoMensualEstimado: number;
   periodo: PeriodoAcumulado;
   acumuladoPeriodo: number;
+  // Lo que Mercado Pago acredita después de su comisión, sumado. Puede ser
+  // menor que acumuladoPeriodo si algún pago viejo no trae montoNeto.
+  acumuladoNetoPeriodo: number;
   numeroPagosPeriodo: number;
-  ultimosPagos: { id: string; tiendaNombre: string; monto: number; fecha: Date }[];
+  ultimosPagos: {
+    id: string;
+    tiendaNombre: string;
+    monto: number;
+    montoNeto: number | null;
+    fecha: Date;
+  }[];
 }
 
 export async function obtenerResumenAdmin(): Promise<ResumenAdmin> {
@@ -45,7 +54,7 @@ export async function obtenerResumenAdmin(): Promise<ResumenAdmin> {
     }),
     prisma.pago.aggregate({
       where: { fecha: { gte: periodo.desde, lte: periodo.hasta } },
-      _sum: { monto: true },
+      _sum: { monto: true, montoNeto: true },
       _count: true,
     }),
     prisma.pago.findMany({
@@ -86,11 +95,14 @@ export async function obtenerResumenAdmin(): Promise<ResumenAdmin> {
     ingresoMensualEstimado,
     periodo,
     acumuladoPeriodo: (agregadoPeriodo._sum.monto as Prisma.Decimal | null)?.toNumber() ?? 0,
+    acumuladoNetoPeriodo:
+      (agregadoPeriodo._sum.montoNeto as Prisma.Decimal | null)?.toNumber() ?? 0,
     numeroPagosPeriodo: agregadoPeriodo._count,
     ultimosPagos: ultimosPagos.map((p) => ({
       id: p.id,
       tiendaNombre: p.tienda.nombre,
       monto: p.monto.toNumber(),
+      montoNeto: p.montoNeto ? p.montoNeto.toNumber() : null,
       fecha: p.fecha,
     })),
   };

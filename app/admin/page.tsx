@@ -123,6 +123,16 @@ export default async function PaginaAdmin() {
           {resumen.numeroPagosPeriodo} pago{resumen.numeroPagosPeriodo === 1 ? "" : "s"} acreditado
           {resumen.numeroPagosPeriodo === 1 ? "" : "s"} en este corte
         </p>
+        <div className="flex items-center justify-between pt-2 border-t border-borde mt-1 text-sm">
+          <span className="text-texto-suave">Comisión de Mercado Pago</span>
+          <span className="font-semibold text-peligro">
+            -${(resumen.acumuladoPeriodo - resumen.acumuladoNetoPeriodo).toFixed(2)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-texto-suave">Lo que realmente te depositan</span>
+          <span className="font-bold text-ok">${resumen.acumuladoNetoPeriodo.toFixed(2)}</span>
+        </div>
       </Tarjeta>
 
       <Tarjeta className="p-4 flex flex-col gap-2">
@@ -140,7 +150,12 @@ export default async function PaginaAdmin() {
                   <p className="font-medium truncate">{p.tiendaNombre}</p>
                   <p className="text-texto-suave text-sm">{formatoFechaHora(p.fecha)}</p>
                 </div>
-                <p className="font-bold shrink-0">${p.monto.toFixed(2)}</p>
+                <div className="text-right shrink-0">
+                  <p className="font-bold">${p.monto.toFixed(2)}</p>
+                  {p.montoNeto !== null && (
+                    <p className="text-ok text-sm">neto ${p.montoNeto.toFixed(2)}</p>
+                  )}
+                </div>
               </div>
             ))}
           </div>

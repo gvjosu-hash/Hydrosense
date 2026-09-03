@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/aplicar-migraciones.mjs && node scripts/asegurar-cuenta-permanente.mjs && node scripts/crear-tienda-prueba-vencida.mjs && next build",
+    "build": "node scripts/aplicar-migraciones.mjs && node scripts/asegurar-cuenta-permanente.mjs && node scripts/crear-tienda-prueba-vencida.mjs && node scripts/rellenar-monto-neto-pagos.mjs && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate"

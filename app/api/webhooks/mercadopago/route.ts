@@ -47,6 +47,7 @@ async function procesarPago(dataId: string) {
 
   const tiendaId = pago.external_reference;
   const monto = pago.transaction_amount;
+  const montoNeto = pago.transaction_details?.net_received_amount;
   const paymentId = pago.id;
   if (!tiendaId || monto === undefined || paymentId === undefined) return;
 
@@ -55,11 +56,12 @@ async function procesarPago(dataId: string) {
 
   await prisma.pago.upsert({
     where: { mpPaymentId: String(paymentId) },
-    update: {},
+    update: { montoNeto },
     create: {
       tiendaId,
       mpPaymentId: String(paymentId),
       monto,
+      montoNeto,
       fecha: pago.date_approved ? new Date(pago.date_approved) : new Date(),
     },
   });
