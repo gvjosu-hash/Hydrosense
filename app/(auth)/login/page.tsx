@@ -81,7 +81,8 @@ export default function PaginaLogin() {
         <form onSubmit={enviar} className="flex flex-col gap-4">
           <Campo
             id="identificador"
-            etiqueta="Correo o WhatsApp"
+            etiqueta="Correo"
+            type="email"
             value={identificador}
             onChange={(e) => setIdentificador(e.target.value)}
             required

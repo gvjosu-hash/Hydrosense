@@ -6,7 +6,7 @@ import { COOKIE_SESION, firmarSesion, verificarPassword, opcionesCookieSesion } 
 import { respuestaError } from "@/lib/api-utils";
 
 const esquemaLogin = z.object({
-  identificador: z.string().trim().min(3, "Escribe tu correo o WhatsApp"),
+  identificador: z.string().trim().min(3, "Escribe tu correo"),
   password: z.string().min(1, "Escribe tu contraseña"),
 });
 
@@ -23,12 +23,12 @@ export async function POST(request: Request) {
     });
 
     if (!usuario) {
-      return NextResponse.json({ error: "Correo/WhatsApp o contraseña incorrectos" }, { status: 401 });
+      return NextResponse.json({ error: "Correo o contraseña incorrectos" }, { status: 401 });
     }
 
     const passwordValida = await verificarPassword(datos.password, usuario.passwordHash);
     if (!passwordValida) {
-      return NextResponse.json({ error: "Correo/WhatsApp o contraseña incorrectos" }, { status: 401 });
+      return NextResponse.json({ error: "Correo o contraseña incorrectos" }, { status: 401 });
     }
 
     const token = await firmarSesion({
