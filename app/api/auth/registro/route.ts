@@ -10,51 +10,20 @@ import { DIAS_PRUEBA_GRATIS } from "@/lib/mercadopago";
 const esquemaRegistro = z.object({
   nombreTienda: z.string().trim().min(2, "El nombre de la tienda es muy corto"),
   nombreUsuario: z.string().trim().min(2, "Escribe tu nombre"),
-  contacto: z.string().trim().min(3, "Captura tu correo o WhatsApp"),
+  correo: z.string().trim().toLowerCase().email("Escribe un correo válido"),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
+  plan: z.enum(["BASICO", "MEDIANO", "COMPLETO"]),
 });
-
-function separarContacto(contacto: string): { correo: string | null; whatsapp: string | null } {
-  if (contacto.includes("@")) {
-    return { correo: contacto.toLowerCase(), whatsapp: null };
-  }
-  const soloDigitos = contacto.replace(/[^0-9]/g, "");
-  return { correo: null, whatsapp: soloDigitos };
-}
 
 export async function POST(request: Request) {
   try {
     const cuerpo = await request.json();
     const datos = esquemaRegistro.parse(cuerpo);
-    const { correo, whatsapp } = separarContacto(datos.contacto);
+    const correo = datos.correo;
 
-    if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
-      return NextResponse.json({ error: "Correo inválido" }, { status: 400 });
-    }
-    if (whatsapp && (whatsapp.length < 10 || whatsapp.length > 15)) {
-      return NextResponse.json(
-        { error: "El WhatsApp debe tener entre 10 y 15 dígitos" },
-        { status: 400 }
-      );
-    }
-
-    if (correo) {
-      const existente = await prisma.usuario.findUnique({ where: { correo } });
-      if (existente) {
-        return NextResponse.json(
-          { error: "Ya existe una cuenta con ese correo" },
-          { status: 409 }
-        );
-      }
-    }
-    if (whatsapp) {
-      const existente = await prisma.usuario.findUnique({ where: { whatsapp } });
-      if (existente) {
-        return NextResponse.json(
-          { error: "Ya existe una cuenta con ese WhatsApp" },
-          { status: 409 }
-        );
-      }
+    const existente = await prisma.usuario.findUnique({ where: { correo } });
+    if (existente) {
+      return NextResponse.json({ error: "Ya existe una cuenta con ese correo" }, { status: 409 });
     }
 
     const passwordHash = await hashearPassword(datos.password);
@@ -68,7 +37,6 @@ export async function POST(request: Request) {
           tiendaId: tienda.id,
           nombre: datos.nombreUsuario,
           correo,
-          whatsapp,
           passwordHash,
           rol: "DUENO",
         },
@@ -95,6 +63,7 @@ export async function POST(request: Request) {
           estado: "PRUEBA",
           fechaInicioPrueba: ahora,
           fechaFinPrueba,
+          plan: datos.plan,
         },
       });
       return { tienda, usuario };

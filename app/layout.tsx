@@ -23,9 +23,9 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Xolo · Punto de venta para tu tienda",
+  title: "Xolo · Punto de venta para cualquier negocio",
   description:
-    "Xolo es el punto de venta para tiendas de abarrotes: cobra, controla tu inventario y cierra tu caja sin complicaciones.",
+    "Xolo es el punto de venta para cualquier negocio: cobra, controla tu inventario y cierra tu caja sin complicaciones.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
